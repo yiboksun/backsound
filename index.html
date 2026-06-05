@@ -147,6 +147,7 @@ async function startApp() {
     canvas.getContext("2d");
 
     let lastTrigger = 0;
+    let warningUntil = 0;
 
     let baseline = 0;
     let samples = 0;
@@ -202,6 +203,7 @@ for (let i = 0; i < bufferLength; i++) {
   console.log("감지됨", avg);
 
   lastTrigger = Date.now();
+  warningUntil = Date.now() + 3000;
 
   document.body.style.backgroundColor = "red";
   document.getElementById("warning").innerText = "⚠️ 위험한 소리 감지!";
