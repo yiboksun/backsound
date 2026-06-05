@@ -55,7 +55,7 @@
     }
 
     button {
-      background-color: #ff000049;
+      background-color: #35353549;
       color: white;
       border: none;
       padding: 18px 40px;
@@ -214,6 +214,8 @@ const rms = Math.sqrt(energy / bufferLength);
   const beep = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
   beep.volume = 1;
   beep.play();
+   then(() => console.log("재생 성공"))
+   catch(err => console.log("재생 실패", err));
 
 } else {
   document.body.style.backgroundColor = "#111827";
