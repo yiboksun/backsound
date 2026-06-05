@@ -104,7 +104,6 @@
     <div id="warning"></div>
   </div>
 </div>
-  </div>
 
   <script>
 
@@ -213,9 +212,9 @@ const rms = Math.sqrt(energy / bufferLength);
 
   const beep = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
   beep.volume = 1;
-  beep.play();
-   then(() => console.log("재생 성공"))
-   catch(err => console.log("재생 실패", err));
+  beep.play()
+  .then(() => console.log("재생 성공"))
+  .catch(err => console.log("재생 실패", err));
 
 } else {
   document.body.style.backgroundColor = "#111827";
