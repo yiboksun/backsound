@@ -194,22 +194,16 @@ const max = Math.max(...dataArray);
 
  // ===== 2. 기준값 학습 =====
   if (samples < 100) {
-    baseline += avg;
-    samples++;
-    
+  baseline += avg;
+  samples++;
+
   document.getElementById("level").innerText =
     "학습 중... " + samples + "%";
 
-  return requestAnimationFrame(draw);
+  return;
 }
 
   const baseAvg = baseline / 100;
-
-  let energy = 0;
-
-for (let i = 0; i < bufferLength; i++) {
-  energy += dataArray[i] * dataArray[i];
-}
 
   // ===== 3. UI 표시 =====
   document.getElementById("level").innerText =
@@ -218,28 +212,28 @@ for (let i = 0; i < bufferLength; i++) {
 
   // ===== 4. 위험 감지 =====
   if (
-   avg > baseAvg + 10 &&
+  avg > baseAvg + 10 &&
   Date.now() - lastTrigger > 2000
 ) {
-
   lastTrigger = Date.now();
   warningUntil = Date.now() + 3000;
-
-  document.body.style.backgroundColor = "red";
-  document.getElementById("warning").innerText = "⚠️ 위험한 소리 감지!";
 
   if (navigator.vibrate) {
     navigator.vibrate([300, 100, 300]);
   }
 
   playBeep();
-  
+}
 
-
+ if (Date.now() < warningUntil) {
+  document.body.style.backgroundColor = "red";
+  document.getElementById("warning").innerText =
+    "⚠️ 위험한 소리 감지!";
 } else {
   document.body.style.backgroundColor = "#111827";
   document.getElementById("warning").innerText = "";
 }
+
 
   // ===== 5. 캔버스 그리기 =====
   ctx.clearRect(0, 0, canvas.width, canvas.height);
