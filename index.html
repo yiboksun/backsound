@@ -189,8 +189,6 @@ for (let i = 0; i < bufferLength; i++) {
   energy += dataArray[i] * dataArray[i];
 }
 
-const rms = Math.sqrt(energy / bufferLength);
-
   // ===== 3. UI 표시 =====
   document.getElementById("level").innerText =
       "AVG: " + avg.toFixed(1) +
@@ -201,6 +199,8 @@ const rms = Math.sqrt(energy / bufferLength);
   avg > 5 &&
   Date.now() - lastTrigger > 2000
 ) {
+  console.log("감지됨", avg);
+
   lastTrigger = Date.now();
 
   document.body.style.backgroundColor = "red";
