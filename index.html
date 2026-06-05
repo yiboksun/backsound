@@ -199,8 +199,8 @@ const rms = Math.sqrt(energy / bufferLength);
 
   // ===== 4. 위험 감지 =====
   if (
-  avg > 25 &&
-  max > 150 &&
+  avg > 5 &&
+  max > 30 &&
   Date.now() - lastTrigger > 2000
 ) {
   lastTrigger = Date.now();
