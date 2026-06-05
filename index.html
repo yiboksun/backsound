@@ -6,14 +6,43 @@
   <title>Back Sound</title>
 
   <style>
-    body {
+ body
+ {
       margin: 0;
       background-color: #111827;
       font-family: Arial;
       overflow: hidden;
+    } 
 
-  
-    }
+ #startScreen,
+#infoScreen,
+#mainScreen {
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  flex-direction: column;
+}
+
+#startScreen {
+  display: flex;
+}
+
+button {
+  background-color: #35353549;
+  color: white;
+  border: none;
+  padding: 18px 40px;
+  border-radius: 15px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #c3db9c;
+}
 
    #ui {
   position: absolute;
@@ -34,54 +63,17 @@
 #warning {
   margin-top: 10px;
   font-size: 28px;
-  color: red;
+  color: rgb(255, 255, 255);
   font-weight: bold;
 }
 
-    /* 시작 화면 */
-    #startScreen {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      color: rgb(255, 255, 255);
-    }
-
-    h1 {
-      font-size: 50px;
-      margin-bottom: 30px;
-    }
-
-    button {
-      background-color: #35353549;
-      color: white;
-      border: none;
-      padding: 18px 40px;
-      border-radius: 15px;
-      font-size: 20px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #c3db9c;
-    }
-
-    /* 메인 화면 */
-    #mainScreen {
-  display: none;
+canvas {
   width: 100vw;
-  height: 100vh;
-  justify-content: center;
-  align-items: center;
+  height: 300px;
 }
+</style>
 
-    canvas {
-      width: 100vw;
-      height: 300px;
-    }
-  </style>
+
 </head>
 
 <body>
@@ -95,6 +87,23 @@
     </button>
   </div>
 
+  <!-- 설명 화면 -->
+<div id="infoScreen" style="display:none;">
+  <div>
+    <h2>Back Sound 소개</h2>
+
+    <p>
+      이어폰 사용 중 주변 위험 소리를 감지하여 알려주는 보행 안전 시스템입니다.
+    </p>
+
+    <p>
+      위험도 단계, 진동 알림, 보행 분석 기능을 제공합니다.
+    </p>
+
+    <button onclick="enterMain()">확인</button>
+  </div>
+</div>
+
   <!-- 메인 화면 -->
   <div id="mainScreen">
     <canvas id="wave"></canvas>
@@ -106,155 +115,104 @@
 </div>
 
   <script>
-
-    
-async function startApp() {
-
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: true
-  });
-
+    async function startApp() {
   document.getElementById("startScreen").style.display = "none";
+  document.getElementById("infoScreen").style.display = "flex";
+}
+
+async function enterMain() {
+
+  document.getElementById("infoScreen").style.display = "none";
   document.getElementById("mainScreen").style.display = "flex";
 
-  const audioContext =
-    new (window.AudioContext || window.webkitAudioContext)();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-     await audioContext.resume();
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  await audioContext.resume();
 
-  const analyser =
-    audioContext.createAnalyser();
-
-  const microphone =
-    audioContext.createMediaStreamSource(stream);
+  const analyser = audioContext.createAnalyser();
+  const microphone = audioContext.createMediaStreamSource(stream);
 
   microphone.connect(analyser);
 
-  await audioContext.resume();
-
   analyser.fftSize = 256;
 
-  const bufferLength =
-    analyser.frequencyBinCount;
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
 
-  const dataArray =
-    new Uint8Array(bufferLength);
-
-  const canvas =
-    document.getElementById("wave");
-
-  const ctx =
-    canvas.getContext("2d");
-
-    let lastTrigger = 0;
-    let warningUntil = 0;
-
-    let baseline = 0;
-    let samples = 0;
+  const canvas = document.getElementById("wave");
+  const ctx = canvas.getContext("2d");
 
   canvas.width = window.innerWidth;
   canvas.height = 300;
 
-  function playBeep() {
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  let baseline = 0;
+  let samples = 0;
+  let lastTrigger = 0;
+  let warningUntil = 0;
 
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  function draw() {
+    requestAnimationFrame(draw);
 
-  oscillator.type = "sine";
-  oscillator.frequency.value = 1000;
+    analyser.getByteFrequencyData(dataArray);
 
-  gainNode.gain.setValueAtTime(
-    0.3,
-    audioContext.currentTime
-  );
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      sum += dataArray[i];
+    }
 
-  oscillator.start();
-  oscillator.stop(
-    audioContext.currentTime + 0.2
-  );
-}
+    const avg = sum / bufferLength;
 
- function draw() {
+    if (samples < 100) {
+      baseline += avg;
+      samples++;
+      document.getElementById("level").innerText =
+        "학습 중... " + samples + "%";
+      return;
+    }
 
-  requestAnimationFrame(draw);
+    const baseAvg = baseline / 100;
 
-  analyser.getByteFrequencyData(dataArray);
+    document.getElementById("level").innerText =
+      "SOUND: " + Math.round(avg);
 
-  // ===== 소리 감지 =====
-  let sum = 0;
+    if (avg > baseAvg + 20 && Date.now() - lastTrigger > 1000) {
+      lastTrigger = Date.now();
+      warningUntil = Date.now() + 1000;
 
-for (let i = 0; i < bufferLength; i++) {
-  sum += dataArray[i];
-}
+      if (navigator.vibrate) {
+        navigator.vibrate([300, 100, 300]);
+      }
+    }
 
-const avg = sum / bufferLength;
-const max = Math.max(...dataArray);
+    if (Date.now() < warningUntil) {
+      document.body.style.backgroundColor = "red";
+      document.getElementById("warning").innerText = "⚠️ 위험 감지!";
+    } else {
+      document.body.style.backgroundColor = "#111827";
+      document.getElementById("warning").innerText = "";
+    }
 
- // ===== 2. 기준값 학습 =====
-  if (samples < 100) {
-  baseline += avg;
-  samples++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  document.getElementById("level").innerText =
-    "학습 중... " + samples + "%";
+    let x = 0;
+    const barWidth = (canvas.width / bufferLength) * 1.5;
 
-  return;
-}
+    for (let i = 0; i < bufferLength; i++) {
+      const barHeight = dataArray[i] * 1.7;
+      const y = (canvas.height - barHeight) / 2;
 
-  const baseAvg = baseline / 100;
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, barWidth, barHeight);
 
-  // ===== 3. UI 표시 =====
-  document.getElementById("level").innerText =
-      "AVG: " + avg.toFixed(1) +
-  " / MAX: " + max;
-
-  // ===== 4. 위험 감지 =====
-  if (
-  avg > baseAvg + 10 &&
-  Date.now() - lastTrigger > 2000
-) {
-  lastTrigger = Date.now();
-  warningUntil = Date.now() + 3000;
-
-  if (navigator.vibrate) {
-    navigator.vibrate([300, 100, 300]);
+      x += barWidth + 3;
+    }
   }
 
-  playBeep();
+  draw();
 }
 
- if (Date.now() < warningUntil) {
-  document.body.style.backgroundColor = "red";
-  document.getElementById("warning").innerText =
-    "⚠️ 위험한 소리 감지!";
-} else {
-  document.body.style.backgroundColor = "#111827";
-  document.getElementById("warning").innerText = "";
-}
-
-
-  // ===== 5. 캔버스 그리기 =====
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const barWidth = (canvas.width / bufferLength) * 1.5;
-
-  let x = 0;
-
-  for (let i = 0; i < bufferLength; i++) {
-    const barHeight = dataArray[i] * 1.7;
-    const y = (canvas.height - barHeight) / 2;
-
-    ctx.fillStyle = "white";
-    ctx.fillRect(x, y, barWidth, barHeight);
-
-    x += barWidth + 3;
-  }
-}
-draw(); 
-}
-
+    
 </script>
 </body>
 </html>
