@@ -218,10 +218,9 @@ for (let i = 0; i < bufferLength; i++) {
 
   // ===== 4. 위험 감지 =====
   if (
-  avg > 5 &&
+   avg > baseAvg + 10 &&
   Date.now() - lastTrigger > 2000
 ) {
-  console.log("감지됨", avg);
 
   lastTrigger = Date.now();
   warningUntil = Date.now() + 3000;
@@ -233,8 +232,6 @@ for (let i = 0; i < bufferLength; i++) {
     navigator.vibrate([300, 100, 300]);
   }
 
-  console.log("감지");
-  
   playBeep();
   
 
