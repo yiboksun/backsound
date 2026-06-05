@@ -13,6 +13,45 @@
       font-family: Arial;
       overflow: hidden;
     } 
+    #infoScreen {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+}
+
+#infoBox {
+  width: 80%;
+  max-width: 600px;
+  text-align: center;
+  color: white;
+}
+
+#infoBox h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+#infoText {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 10px;
+  line-height: 1.6;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+#infoText::-webkit-scrollbar {
+  width: 6px;
+}
+
+#infoText::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+}
 
  #startScreen,
 #infoScreen,
@@ -87,20 +126,46 @@ canvas {
     </button>
   </div>
 
-  <!-- 설명 화면 -->
-<div id="infoScreen" style="display:none;">
-  <div>
-    <h2>Back Sound 소개</h2>
+ <div id="infoScreen" style="display:none;">
+  <div id="infoBox">
 
-    <p>
-      이어폰 사용 중 주변 위험 소리를 감지하여 알려주는 보행 안전 시스템입니다.
-    </p>
+    <h2>Back Sound 앱 소개</h2>
 
-    <p>
-      위험도 단계, 진동 알림, 보행 분석 기능을 제공합니다.
-    </p>
+    <div id="infoText">
+
+      <p>안녕하세요. 보행 중 안전을 지키는 스마트 보조 시스템 Back Sound입니다.</p>
+
+      <p>
+        Back Sound는 이어폰 사용 시 주변 소리를 놓치기 쉬운 문제를 해결하기 위해,
+        실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는
+        보행 안전 보조 앱입니다.
+      </p>
+
+      <h3>주요 기능</h3>
+
+      <p>
+        • 주변 소리 자동 분석 및 학습<br>
+        • 위험 상황 실시간 감지 및 경고<br>
+        • 위험 단계별 알림 시스템<br>
+        • 진동 강도 차등 적용<br>
+        • 위험 기록 및 통계 분석
+      </p>
+
+      <h3>사용 방법</h3>
+
+      <p>
+        1. 앱을 실행하면 자동으로 소리를 분석합니다.<br>
+        2. 위험이 감지되면 진동과 화면으로 즉시 알려줍니다.
+      </p>
+
+      <p>
+        Back Sound와 함께 더욱 안전한 보행 환경을 경험해 보세요.
+      </p>
+
+    </div>
 
     <button onclick="enterMain()">확인</button>
+
   </div>
 </div>
 
