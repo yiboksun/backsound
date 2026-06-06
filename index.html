@@ -247,6 +247,22 @@ async function enterMain() {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   await audioContext.resume();
 
+  function playBeep() {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.frequency.value = 1000;
+  oscillator.type = "sine";
+
+  gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+
   const analyser = audioContext.createAnalyser();
   const microphone = audioContext.createMediaStreamSource(stream);
 
@@ -300,6 +316,7 @@ async function enterMain() {
       if (navigator.vibrate) {
         navigator.vibrate([300, 100, 300]);
       }
+      playBeep();
     }
 
     if (Date.now() < warningUntil) {
