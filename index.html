@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>Back Sound</title>
+
     <style>
         body {
             margin: 0;
@@ -144,46 +145,211 @@
             height: 300px;
         }
     </style>
+
+
 </head>
 
-<body> <!-- 시작 화면 -->
+<body>
+
+    <!-- 시작 화면 -->
     <div id="startScreen">
-        <h1>🎧 Back Sound</h1> <button onclick="startApp()"> 시작하기 </button>
+        <h1>🎧 Back Sound</h1>
+
+        <button onclick="startApp()">
+            시작하기
+        </button>
     </div>
+
     <div id="infoScreen" style="display:none;">
         <div id="infoBox">
+
             <h2>Back Sound</h2>
+
             <div id="infoText">
                 <h3>[Back Sound 앱 소개]</h3>
+
                 <p class="centerText">안녕하세요. 보행 중 안전을 지키는 스마트 보조 시스템 Back Sound입니다. </p>
+
                 <p class="centerText">Back Sound는 이어폰 사용 시 주변 소리를 놓치기 쉬운 문제를 해결하기 위해,</p>
-                <p>실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는 보행 안전 보조 앱입니다.</p>
+
+                <p>실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는
+                    보행 안전 보조 앱입니다.</p>
+
+
                 <h4>[주요 기능]</h4>
-                <p> Back Sound는 주변 소리를 지속적으로 분석하여</p>
+
+                <p>
+                    Back Sound는 주변 소리를 지속적으로 분석하여</p>
+
                 <p> 평소보다 큰 소음이 발생하면 위험 상황으로 판단하고 사용자에게 알려줍니다.</p>
-                <p>위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을 인지할 수 있도록 도와줍니다.</p>
+
+                <p>위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을
+                    인지할 수 있도록 도와줍니다.</p>
+
                 <p>또한 현재 주변 소리의 크기를 실시간으로 확인할 수 있어</p>
+
                 <p>보행 중에도 주변 환경 변화를 쉽게 파악할 수 있습니다.</p>
+
                 <h5>[사용 방법]</h5>
-                <p> 1. 앱을 실행합니다.</p>
+
+                <p>
+                    1. 앱을 실행합니다.</p>
+
                 <p> 2. 마이크 사용 권한을 허용합니다.</p>
+
                 <p>3. 앱이 자동으로 주변 소리를 분석하기 시작합니다.</p>
+
                 <p>4. 위험 소음이 감지되면 화면 경고가 표시됩니다.</p>
+
                 <p>5. Android 기기에서는 진동 알림이 함께 제공됩니다.</p>
-                <p style="margin-top: 80px;"> ※ iPhone 사용자는 Safari 브라우저 사용을 권장합니다. </p>
+
+                <p style="margin-top: 80px;">
+                    ※ iPhone 사용자는 Safari 브라우저 사용을 권장합니다.
+                </p>
+
                 <p>※ 브라우저 및 기기 환경에 따라 일부 기능이 다르게 동작할 수 있습니다.</p>
+
                 <p>※ 마이크 사용 권한이 허용되어야 정상적으로 사용할 수 있습니다.</p>
-                <p style="margin-top: 80px;"> Back Sound와 함께 더욱 안전한 보행 환경을 경험해 보세요. </p>
-            </div> <button onclick="enterMain()">확인</button>
+
+                <p style="margin-top: 80px;">
+                    Back Sound와 함께 더욱 안전한 보행 환경을 경험해 보세요.
+                </p>
+
+            </div>
+
+            <button onclick="enterMain()">확인</button>
+
         </div>
-    </div> <!-- 메인 화면 -->
-    <div id="mainScreen"> <canvas id="wave"></canvas>
+    </div>
+
+    <!-- 메인 화면 -->
+    <div id="mainScreen">
+        <canvas id="wave"></canvas>
+
         <div id="ui">
             <div id="level">SOUND: 0</div>
             <div id="warning"></div>
         </div>
     </div>
-    <script> async function startApp() { document.getElementById("startScreen").style.display = "none"; document.getElementById("infoScreen").style.display = "flex"; } async function enterMain() { document.getElementById("infoScreen").style.display = "none"; document.getElementById("mainScreen").style.display = "flex"; const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const audioContext = new (window.AudioContext || window.webkitAudioContext)(); await audioContext.resume(); const analyser = audioContext.createAnalyser(); const microphone = audioContext.createMediaStreamSource(stream); microphone.connect(analyser); analyser.fftSize = 256; const bufferLength = analyser.frequencyBinCount; const dataArray = new Uint8Array(bufferLength); const canvas = document.getElementById("wave"); const ctx = canvas.getContext("2d"); canvas.width = window.innerWidth; canvas.height = 300; let baseline = 0; let samples = 0; let lastTrigger = 0; let warningUntil = 0; function draw() { requestAnimationFrame(draw); analyser.getByteFrequencyData(dataArray); let sum = 0; for (let i = 0; i < bufferLength; i++) { sum += dataArray[i]; } const avg = sum / bufferLength; if (samples < 100) { baseline += avg; samples++; document.getElementById("level").innerText = "학습 중... " + samples + "%"; return; } const baseAvg = baseline / 100; document.getElementById("level").innerText = "SOUND: " + Math.round(avg); if (avg > baseAvg + 20 && Date.now() - lastTrigger > 1000) { lastTrigger = Date.now(); warningUntil = Date.now() + 1000; if (navigator.vibrate) { navigator.vibrate([300, 100, 300]); } } if (Date.now() < warningUntil) { document.body.style.backgroundColor = "red"; document.getElementById("warning").innerText = "⚠️ 위험 감지!"; } else { document.body.style.backgroundColor = "#111827"; document.getElementById("warning").innerText = ""; } ctx.clearRect(0, 0, canvas.width, canvas.height); let x = 0; const barWidth = (canvas.width / bufferLength) * 1.5; for (let i = 0; i < bufferLength; i++) { const barHeight = dataArray[i] * 1.7; const y = (canvas.height - barHeight) / 2; ctx.fillStyle = "white"; ctx.fillRect(x, y, barWidth, barHeight); x += barWidth + 3; } } draw(); } </script>
+
+    <script>
+        async function startApp() {
+            document.getElementById("startScreen").style.display = "none";
+            document.getElementById("infoScreen").style.display = "flex";
+        }
+
+        async function enterMain() {
+
+            document.getElementById("infoScreen").style.display = "none";
+            document.getElementById("mainScreen").style.display = "flex";
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            await audioContext.resume();
+
+            function playBeep() {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.frequency.value = 1000;
+  oscillator.type = "sine";
+
+  gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+
+            const analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(stream);
+
+            microphone.connect(analyser);
+
+            analyser.fftSize = 256;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const canvas = document.getElementById("wave");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = window.innerWidth;
+            canvas.height = 300;
+
+            let baseline = 0;
+            let samples = 0;
+            let lastTrigger = 0;
+            let warningUntil = 0;
+
+            function draw() {
+                requestAnimationFrame(draw);
+
+                analyser.getByteFrequencyData(dataArray);
+
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+
+                const avg = sum / bufferLength;
+
+                if (samples < 100) {
+                    baseline += avg;
+                    samples++;
+                    document.getElementById("level").innerText =
+                        "학습 중... " + samples + "%";
+                    return;
+                }
+
+                const baseAvg = baseline / 100;
+
+                document.getElementById("level").innerText =
+                    "SOUND: " + Math.round(avg);
+
+                if (avg > baseAvg + 20 && Date.now() - lastTrigger > 1000) {
+                    lastTrigger = Date.now();
+                    warningUntil = Date.now() + 1000;
+
+                    if (navigator.vibrate) {
+                        navigator.vibrate([300, 100, 300]);
+                    }
+
+                    playBeep();
+                }
+
+                if (Date.now() < warningUntil) {
+                    document.body.style.backgroundColor = "red";
+                    document.getElementById("warning").innerText = "⚠️ 위험 감지!";
+                } else {
+                    document.body.style.backgroundColor = "#111827";
+                    document.getElementById("warning").innerText = "";
+                }
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let x = 0;
+                const barWidth = (canvas.width / bufferLength) * 1.5;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] * 1.7;
+                    const y = (canvas.height - barHeight) / 2;
+
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(x, y, barWidth, barHeight);
+
+                    x += barWidth + 3;
+                }
+            }
+
+            draw();
+        }
+
+
+    </script>
 </body>
 
 </html>
