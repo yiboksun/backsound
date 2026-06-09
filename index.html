@@ -310,7 +310,7 @@
                 document.getElementById("level").innerText =
                     "SOUND: " + Math.round(avg);
 
-                if (avg > baseAvg + 20 && Date.now() - lastTrigger > 1000) {
+                if (avg > baseAvg + 120 && Date.now() - lastTrigger > 1000) {
                     lastTrigger = Date.now();
                     warningUntil = Date.now() + 1000;
 
