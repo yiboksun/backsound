@@ -186,7 +186,7 @@
             <div id="warning"></div>
         </div>
     </div>
-
+<div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
     <script>
 let audioContext;
 let analyser;
@@ -214,14 +214,12 @@ function startApp() {
 }
 
 async function enterMain() {
-    console.log("마이크 요청 시작");
 
-const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    log("마이크 요청 중...");
 
-console.log("마이크 성공:", stream);
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    document.getElementById("infoScreen").style.display = "none";
-    document.getElementById("mainScreen").style.display = "flex";
+    log("마이크 연결 성공!");
 
     audioContext = new AudioContext();
     await audioContext.resume();
@@ -240,12 +238,15 @@ console.log("마이크 성공:", stream);
     canvas.width = window.innerWidth;
     canvas.height = 300;
 
-    classifier = new EdgeImpulseClassifier();
-    await classifier.init();
+    log("시각화 시작");
 
-    draw(); 
+    draw(); // 🔥 이거 꼭 있어야 화면 움직임
 
-    setInterval(runAI, 300); // 🔥 AI 따로
+    setInterval(runAI, 300);
+}
+
+function log(msg) {
+    document.getElementById("debug").innerText = msg;
 }
 
 function draw() {
