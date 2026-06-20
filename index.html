@@ -337,38 +337,42 @@ function aiLoop() {
 
     try {
 
-        const result =
-            window.classifier.classify(input);
+    const result =
+        window.classifier.classify(input);
 
-        if (result?.results) {
+    console.log("전체 결과:", result);
+    console.log("results:", result.results);
 
-            let bestLabel = "";
-            let bestScore = 0;
+    if (result?.results) {
 
-            result.results.forEach(r => {
+        let bestLabel = "";
+        let bestScore = 0;
 
-                if (r.value > bestScore) {
-                    bestScore = r.value;
-                    bestLabel = r.label;
-                }
+        result.results.forEach(r => {
 
-            });
-
-            if (bestScore > 0.8) {
-
-                document.getElementById("warning").innerText =
-                    bestLabel + " 감지!";
-
-                navigator.vibrate?.([300,100,300]);
+            if (r.value > bestScore) {
+                bestScore = r.value;
+                bestLabel = r.label;
             }
+
+        });
+
+        if (bestScore > 0.8) {
+
+            document.getElementById("warning").innerText =
+                bestLabel + " 감지!";
+
+            navigator.vibrate?.([300,100,300]);
         }
-
-    }
-    catch(err) {
-        console.log("AI error:", err);
     }
 
-    aiRunning = false;
+}
+catch(err) {
+    console.log("AI error:", err);
+}
+
+aiRunning = false;
+
 }
 
 // =========================
