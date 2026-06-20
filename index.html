@@ -223,6 +223,8 @@ async function enterMain() {
     try {
         log("시작 중...");
 
+        document.getElementById("mainScreen").style.display = "flex";
+
         // 🔥 AI 먼저 준비 (핵심)
         window.classifier = new EdgeImpulseClassifier();
         window.classifier.init()
@@ -236,6 +238,9 @@ async function enterMain() {
 
         // 마이크 권한
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        audioContext = new AudioContext();
+await audioContext.resume();
 
         // 오디오 컨텍스트
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -337,6 +342,10 @@ function drawLoop() {
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
         document.getElementById("warning").innerText = "큰 소리 감지!";
+
+        playBeep();
+        navigator.vibrate(200);
+
     } else {
         document.body.style.backgroundColor = "#111827";
         document.getElementById("warning").innerText = "";
