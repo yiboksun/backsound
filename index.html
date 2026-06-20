@@ -214,6 +214,12 @@ function startApp() {
 }
 
 async function enterMain() {
+    console.log("마이크 요청 시작");
+
+const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+console.log("마이크 성공:", stream);
+
     document.getElementById("infoScreen").style.display = "none";
     document.getElementById("mainScreen").style.display = "flex";
 
