@@ -151,7 +151,6 @@
 
 <body>
 
-    <!-- 시작 화면 -->
     <div id="startScreen">
         <h1>🎧 Back Sound</h1>
 
@@ -222,7 +221,6 @@
         </div>
     </div>
 
-    <!-- 메인 화면 -->
     <div id="mainScreen">
         <canvas id="wave"></canvas>
 
@@ -239,6 +237,11 @@
         }
 
         async function enterMain() {
+            const classifier = new EdgeImpulseClassifier();
+await classifier.init();
+
+console.log(classifier.getProjectInfo());
+console.log(classifier.getProperties());
 
             document.getElementById("infoScreen").style.display = "none";
             document.getElementById("mainScreen").style.display = "flex";
@@ -323,7 +326,7 @@
 
                 if (Date.now() < warningUntil) {
                     document.body.style.backgroundColor = "red";
-                    document.getElementById("warning").innerText = "⚠️ 위험 감지!";
+                    document.getElementById("warning").innerText = "큰 소리 감지!";
                 } else {
                     document.body.style.backgroundColor = "#111827";
                     document.getElementById("warning").innerText = "";
@@ -350,6 +353,8 @@
 
 
     </script>
+    <script src="edge-impulse-standalone.js"></script>
+<script src="run-impulse.js"></script>
 </body>
 
 </html>
