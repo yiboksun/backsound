@@ -207,28 +207,20 @@ function startApp() {
 }
 
     async function enterMain() {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-await audioContext.resume();
-
-// ⭐ 핵심 추가
-if (audioContext.state !== "running") {
-    await audioContext.resume();
-}
-
     try {
         log("시작 중...");
 
+        const classifier = new EdgeImpulseClassifier();
+        await classifier.init();
+        window.classifier = classifier;
+
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext = new AudioContext();
         await audioContext.resume();
 
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
-
-        console.log("state:", audioContext.state);
-console.log("analyser:", analyser);
 
         const mic = audioContext.createMediaStreamSource(micStream);
         mic.connect(analyser);
@@ -242,8 +234,13 @@ console.log("analyser:", analyser);
 
         isRunning = true;
 
-        drawLoop();   // ⭐ 1번만
-        aiLoop();     // ⭐ 1번만
+        // ⭐ 핵심: AI 먼저 체크
+        if (!window.classifier) {
+            log("AI 모델 없음 (로드 대기)");
+        }
+
+        drawLoop();
+        aiLoop(); // 하나만 사용
 
         log("실행 완료");
 
@@ -255,13 +252,10 @@ console.log("analyser:", analyser);
 function aiLoop() {
     if (!isRunning) return;
 
-     requestAnimationFrame(aiLoop);
+    setTimeout(aiLoop, 300);
 
-    if (!analyser || !dataArray || !classifier) return;
-
-    if (typeof classifier === "undefined") {
-    console.log("classifier 아직 없음");
-}
+    if (!analyser || !dataArray) return;
+    if (!window.classifier) return;   // ⭐ 여기 핵심
 
     analyser.getByteTimeDomainData(dataArray);
 
@@ -281,8 +275,6 @@ function aiLoop() {
             document.getElementById("warning").innerText = "AI 위험 감지!";
         }
     });
-
-    setTimeout(aiLoop, 300); // ⭐ 모바일 안정 핵심
 }
 
 function drawLoop() {
