@@ -230,6 +230,7 @@
         </div>
     </div>
 <script src="edge-impulse-standalone.js"></script>
+<script src="run-impulse.js"></script>
 <script>
 let audioContext;
 let analyser;
@@ -268,12 +269,6 @@ async function enterMain() {
 
     audioContext = new AudioContext();
     await audioContext.resume();
-
-    // =========================
-    // ⭐ AI 초기화 (핵심)
-    // =========================
-    classifier = new EdgeImpulseClassifier();
-    await classifier.init();
 
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 2048;
