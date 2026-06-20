@@ -229,201 +229,198 @@
             <div id="warning"></div>
         </div>
     </div>
+<script src="edge-impulse-standalone.js"></script>
+<script>
+let audioContext;
+let analyser;
+let dataArray;
 
-    <script>
-        async function startApp() {
-            document.getElementById("startScreen").style.display = "none";
-            document.getElementById("infoScreen").style.display = "flex";
-        }
+let classifier;        // AI
+let buffer = [];
+let lastAI = 0;
 
-        async function enterMain() {
-            const classifier = new EdgeImpulseClassifier();
-await classifier.init();
+let canvas;
+let ctx;
 
-console.log(classifier.getProjectInfo());
-console.log(classifier.getProperties());
+let baseline = 0;
+let samples = 0;
 
-            document.getElementById("infoScreen").style.display = "none";
-            document.getElementById("mainScreen").style.display = "flex";
+let lastTrigger = 0;
+let warningUntil = 0;
 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            await audioContext.resume();
-
-            function playBeep() {
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-
-  oscillator.frequency.value = 1000;
-  oscillator.type = "sine";
-
-  gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + 0.2);
+// =========================
+// 시작
+// =========================
+async function startApp() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("infoScreen").style.display = "flex";
 }
-const audioBuffer = [];
-            const analyser = audioContext.createAnalyser();
-            const microphone = audioContext.createMediaStreamSource(stream);
 
-            microphone.connect(analyser);
+// =========================
+// 메인 진입
+// =========================
+async function enterMain() {
 
-            analyser.fftSize = 256;
+    document.getElementById("infoScreen").style.display = "none";
+    document.getElementById("mainScreen").style.display = "flex";
 
-            const processor = audioContext.createScriptProcessor(2048, 1, 1);
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-microphone.connect(processor);
-processor.connect(audioContext.destination);
+    audioContext = new AudioContext();
+    await audioContext.resume();
 
-processor.onaudioprocess = async (e) => {
-    const input = e.inputBuffer.getChannelData(0);
+    // =========================
+    // ⭐ AI 초기화 (핵심)
+    // =========================
+    classifier = new EdgeImpulseClassifier();
+    await classifier.init();
 
-    const result = await classifier.classify(input);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
 
-    if (!result || !result.results) return;
+    const mic = audioContext.createMediaStreamSource(stream);
+    mic.connect(analyser);
 
-    const top = result.results.reduce((a, b) =>
-        a.value > b.value ? a : b
-    );
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-    console.log("TOP:", top);
+    canvas = document.getElementById("wave");
+    ctx = canvas.getContext("2d");
 
-    if (top.value >= 0.6) {
-        if (top.label === "car_horn" || top.label === "motorcycle") {
-            document.body.style.backgroundColor = "red";
-            document.getElementById("warning").innerText =
-                `위험 감지: ${top.label}`;
-        }
-    } else {
-        document.getElementById("warning").innerText = "";
+    canvas.width = window.innerWidth;
+    canvas.height = 300;
+
+    draw();
+}
+
+// =========================
+// beep
+// =========================
+function playBeep() {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.frequency.value = 1000;
+    osc.type = "sine";
+
+    gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+
+    osc.start();
+    osc.stop(audioContext.currentTime + 0.2);
+}
+
+// =========================
+// 메인 루프
+// =========================
+async function draw() {
+
+    requestAnimationFrame(draw);
+
+    analyser.getByteTimeDomainData(dataArray);
+
+    // =========================
+    // 1. 소리 → AI 입력 변환
+    // =========================
+    const input = new Float32Array(dataArray.length);
+
+    for (let i = 0; i < dataArray.length; i++) {
+        input[i] = (dataArray[i] - 128) / 128;
     }
-};
 
-    const input = e.inputBuffer.getChannelData(0);
+    buffer.push(...input);
 
-    const result = await classifier.classify(input);
+    // 1초 데이터 확보
+    if (buffer.length < 16000) return;
 
-    if (!result || !result.results) return;
+    const sample = buffer.slice(0, 16000);
+    buffer.splice(0, 8000);
 
-    const top = result.results.reduce((a, b) =>
-        a.value > b.value ? a : b
-    );
+    // =========================
+    // 2. AI 실행 (400ms 제한)
+    // =========================
+    const now = Date.now();
 
-    console.log("TOP:", top);
+    if (now - lastAI > 400) {
+        lastAI = now;
 
-    if (top.value >= 0.6) {
-        if (top.label === "car_horn" || top.label === "motorcycle") {
-            document.body.style.backgroundColor = "red";
-            document.getElementById("warning").innerText =
-                `위험 감지: ${top.label}`;
-        }
-    } else {
-        document.getElementById("warning").innerText = "";
-    }
-};
+        const result = await classifier.classify(sample);
 
-    const input = e.inputBuffer.getChannelData(0);
+        if (result?.results) {
 
-    const result = await classifier.classify(input);
+            const top = result.results.reduce((a, b) =>
+                a.value > b.value ? a : b
+            );
 
-    console.log("AI result:", result);
+            console.log("AI:", top.label, top.value);
 
-    if (result && result.results) {
-        const top = result.results.reduce((a, b) => 
-            a.value > b.value ? a : b
-        );
+            // =========================
+            // 3. 위험 판단
+            // =========================
+            if (
+                top.value > 0.7 &&
+                (top.label === "car_horn" || top.label === "motorcycle")
+            ) {
 
-        if (top.label === "horn" && top.value > 0.7) {
-            document.body.style.backgroundColor = "red";
-            document.getElementById("warning").innerText = "AI: 위험 감지!";
-        }
-    }
-};
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
+                document.body.style.backgroundColor = "red";
+                document.getElementById("warning").innerText =
+                    "위험 감지: " + top.label;
 
-            const canvas = document.getElementById("wave");
-            const ctx = canvas.getContext("2d");
+                navigator.vibrate?.([300, 100, 300]);
+                playBeep();
 
-            canvas.width = window.innerWidth;
-            canvas.height = 300;
-
-            let baseline = 0;
-            let samples = 0;
-            let lastTrigger = 0;
-            let warningUntil = 0;
-
-            function draw() {
-                requestAnimationFrame(draw);
-
-                analyser.getByteFrequencyData(dataArray);
-
-                let sum = 0;
-                for (let i = 0; i < bufferLength; i++) {
-                    sum += dataArray[i];
-                }
-
-                const avg = sum / bufferLength;
-
-                if (samples < 100) {
-                    baseline += avg;
-                    samples++;
-                    document.getElementById("level").innerText =
-                        "학습 중... " + samples + "%";
-                    return;
-                }
-
-                const baseAvg = baseline / 100;
-
-                document.getElementById("level").innerText =
-                    "SOUND: " + Math.round(avg);
-
-                if (avg > baseAvg + 70 && Date.now() - lastTrigger > 1000) {
-                    lastTrigger = Date.now();
-                    warningUntil = Date.now() + 1000;
-
-                    if (navigator.vibrate) {
-                        navigator.vibrate([300, 100, 300]);
-                    }
-
-                    playBeep();
-                }
-
-                if (Date.now() < warningUntil) {
-                    document.body.style.backgroundColor = "red";
-                    document.getElementById("warning").innerText = "큰 소리 감지!";
-                } else {
-                    document.body.style.backgroundColor = "#111827";
-                    document.getElementById("warning").innerText = "";
-                }
-
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                let x = 0;
-                const barWidth = (canvas.width / bufferLength) * 1.5;
-
-                for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = dataArray[i] * 1.7;
-                    const y = (canvas.height - barHeight) / 2;
-
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(x, y, barWidth, barHeight);
-
-                    x += barWidth + 3;
-                }
+                warningUntil = Date.now() + 1000;
             }
+        }
+    }
 
-            draw();
-    
+    // =========================
+    // 4. 기존 볼륨 분석 (UI용)
+    // =========================
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        sum += Math.abs(input[i]);
+    }
 
+    const avg = sum / dataArray.length;
 
-    </script>
-    <script src="edge-impulse-standalone.js"></script>
-<script src="run-impulse.js"></script>
-</body>
+    if (samples < 100) {
+        baseline += avg;
+        samples++;
+        document.getElementById("level").innerText =
+            "학습 중... " + samples + "%";
+        return;
+    }
 
-</html>
+    document.getElementById("level").innerText =
+        "SOUND: " + Math.round(avg * 100);
+
+    // =========================
+    // 5. 화면 경고 유지
+    // =========================
+    if (Date.now() < warningUntil) {
+        document.body.style.backgroundColor = "red";
+    } else {
+        document.body.style.backgroundColor = "#111827";
+        document.getElementById("warning").innerText = "";
+    }
+
+    // =========================
+    // 6. 시각화
+    // =========================
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let x = 0;
+    const barWidth = canvas.width / dataArray.length;
+
+    for (let i = 0; i < dataArray.length; i++) {
+        const h = dataArray[i];
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, (canvas.height - h) / 2, barWidth, h);
+
+        x += barWidth;
+    }
+}
+</script>
