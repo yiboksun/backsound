@@ -213,28 +213,16 @@ function startApp() {
     document.getElementById("infoScreen").style.display = "flex";
 }
 
-// =========================
-// 메인 진입
-// =========================
 async function enterMain() {
-
     document.getElementById("infoScreen").style.display = "none";
     document.getElementById("mainScreen").style.display = "flex";
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
     audioContext = new AudioContext();
-
     await audioContext.resume();
-    console.log(audioContext.state);
-
-    console.log(stream.getAudioTracks());
 
     analyser = audioContext.createAnalyser();
-
-    classifier = new EdgeImpulseClassifier();
-await classifier.init();
-
     analyser.fftSize = 256;
 
     const mic = audioContext.createMediaStreamSource(stream);
@@ -248,29 +236,13 @@ await classifier.init();
     canvas.width = window.innerWidth;
     canvas.height = 300;
 
-    draw();
+    classifier = new EdgeImpulseClassifier();
+    await classifier.init();
 
-    console.log("AI 시작");
+    draw(); 
 
-console.log("AI 준비 완료");
-
-setInterval(async () => {
-
-        if (!classifier) return;
-
-        analyser.getByteTimeDomainData(dataArray);
-
-        const input = new Float32Array(dataArray.length);
-
-        for (let i = 0; i < dataArray.length; i++) {
-            input[i] = (dataArray[i] - 128) / 128;
-        }
-
-        const result = await classifier.classify(input);
-
-        console.log("AI 결과:", result);
-
-    }, 300);
+    setInterval(runAI, 300); // 🔥 AI 따로
+}
 
 function draw() {
     requestAnimationFrame(draw);
@@ -284,10 +256,8 @@ function draw() {
 
     const avg = sum / dataArray.length;
 
-    document.getElementById("level").innerText =
-        "SOUND: " + Math.round(avg);
+    document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
 
-    // 경고
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
         document.getElementById("warning").innerText = "큰 소리 감지!";
@@ -301,7 +271,6 @@ function draw() {
         document.getElementById("warning").innerText = "";
     }
 
-    // 시각화
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let x = 0;
@@ -317,6 +286,38 @@ function draw() {
         x += barWidth + 3;
     }
 }
+
+async function runAI() {
+    if (!classifier) return;
+
+    analyser.getByteTimeDomainData(dataArray);
+
+    const input = new Float32Array(dataArray.length);
+
+    for (let i = 0; i < dataArray.length; i++) {
+        input[i] = (dataArray[i] - 128) / 128;
+    }
+
+    const result = await classifier.classify(input);
+
+    console.log("AI:", result);
+
+    // 👉 가장 확률 높은 값 찾기
+    if (result?.classification) {
+        const values = Object.values(result.classification);
+        const max = Math.max(...values);
+
+        if (max > 0.8) {
+            document.getElementById("warning").innerText = "AI 위험 감지!";
+            document.body.style.backgroundColor = "red";
+
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+    }
+}
+
 function playBeep() {
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
@@ -332,6 +333,6 @@ function playBeep() {
     osc.start();
     osc.stop(audioContext.currentTime + 0.2);
 }
-}
+
 </script>
 </html>
