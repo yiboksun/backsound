@@ -191,19 +191,12 @@
 let audioContext;
 let analyser;
 let dataArray;
-
-let classifier;
-if (!window.buffer) window.buffer = [];
-let lastAI = 0;
+let micStream;
 
 let canvas;
 let ctx;
 
-let baseline = 0;
-let samples = 0;
-
-let lastTrigger = 0;
-let warningUntil = 0;
+let isRunning = false;
 
 // =========================
 // 시작 화면 → 안내 화면
@@ -214,64 +207,72 @@ function startApp() {
 }
 
     async function enterMain() {
-
-    log("마이크 요청 중...");
-
-    let stream;
-
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        log("시작 중...");
+
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        await audioContext.resume();
+
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+
+        const mic = audioContext.createMediaStreamSource(micStream);
+        mic.connect(analyser);
+
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        canvas = document.getElementById("wave");
+        ctx = canvas.getContext("2d");
+
+        resizeCanvas();
+
+        isRunning = true;
+
+        drawLoop();   // ⭐ 1번만
+        aiLoop();     // ⭐ 1번만
+
+        log("실행 완료");
+
     } catch (e) {
-        log("마이크 권한 실패: " + e.message);
-        return;
+        log("에러: " + e.message);
     }
-
-    log("마이크 연결 성공!");
-
-
-    audioContext = new AudioContext();
-    await audioContext.resume();
-
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-
-    const mic = audioContext.createMediaStreamSource(stream);
-    mic.connect(analyser);
-
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    canvas = document.getElementById("wave");
-
-    if (!canvas) {
-    log("canvas 없음");
-    return;
 }
 
-    ctx = canvas.getContext("2d");
+function aiLoop() {
+    if (!isRunning) return;
+    if (!analyser || !dataArray || !classifier) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = 300;
+    analyser.getByteTimeDomainData(dataArray);
 
-    log("시각화 시작");
+    const input = new Float32Array(dataArray.length);
 
-    resizeCanvas();
-
-setTimeout(() => {
-    draw();
-}, 100);
-
-setInterval(runAI, 300);
+    for (let i = 0; i < dataArray.length; i++) {
+        input[i] = (dataArray[i] - 128) / 128;
     }
 
-function log(msg) {
-    document.getElementById("debug").innerText = msg;
+    classifier.classify(input).then(result => {
+        if (!result?.classification) return;
+
+        const values = Object.values(result.classification);
+        const max = Math.max(...values);
+
+        if (max > 0.8) {
+            document.getElementById("warning").innerText = "AI 위험 감지!";
+        }
+    });
+
+    setTimeout(aiLoop, 300); // ⭐ 모바일 안정 핵심
 }
 
-function draw() {
-    if (!analyser || !dataArray || !ctx) {
-        requestAnimationFrame(draw);
-        return;
-    }
+function drawLoop() {
+    requestAnimationFrame(drawLoop);
+
+    if (!isRunning) return;
+    if (!analyser || !dataArray || !ctx) return;
+
+    analyser.getByteFrequencyData(dataArray);
 
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -280,21 +281,18 @@ function draw() {
 
     const avg = sum / dataArray.length;
 
-    document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
+    document.getElementById("level").innerText =
+        "SOUND: " + Math.round(avg);
 
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
         document.getElementById("warning").innerText = "큰 소리 감지!";
-        playBeep();
-
-        if (navigator.vibrate) {
-            navigator.vibrate([300, 100, 300]);
-        }
     } else {
         document.body.style.backgroundColor = "#111827";
         document.getElementById("warning").innerText = "";
     }
 
+    // wave draw
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let x = 0;
@@ -311,8 +309,21 @@ function draw() {
     }
 }
 
+function resizeCanvas() {
+    if (!canvas) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = 300;
+}
+
+window.addEventListener("resize", resizeCanvas);
+
+function log(msg) {
+    document.getElementById("debug").innerText = msg;
+}
+
 async function runAI() {
-    if (!classifier) return;
+    if (!analyser || !dataArray) return;
 
     analyser.getByteTimeDomainData(dataArray);
 
@@ -322,22 +333,16 @@ async function runAI() {
         input[i] = (dataArray[i] - 128) / 128;
     }
 
-    const result = await classifier.classify(input);
+    if (!classifier) return;
+const result = await classifier.classify(input);
 
-    console.log("AI:", result);
-
-    // 👉 가장 확률 높은 값 찾기
     if (result?.classification) {
         const values = Object.values(result.classification);
         const max = Math.max(...values);
 
         if (max > 0.8) {
-            document.getElementById("warning").innerText = "AI 위험 감지!";
-            document.body.style.backgroundColor = "red";
-
-            if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]);
-            }
+            document.getElementById("warning").innerText =
+                "AI 위험 감지!";
         }
     }
 }
