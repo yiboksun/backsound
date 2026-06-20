@@ -146,7 +146,6 @@
 
     
     </style>
-  <script src="edge-impulse-standalone.js"></script>
 </head>
 
 <body>
@@ -224,6 +223,7 @@ async function enterMain() {
         log("시작 중...");
 
         document.getElementById("mainScreen").style.display = "flex";
+        document.getElementById("infoScreen").style.display = "none";
 
         // 🔥 AI 먼저 준비 (핵심)
         window.classifier = new EdgeImpulseClassifier();
@@ -238,9 +238,6 @@ async function enterMain() {
 
         // 마이크 권한
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-        audioContext = new AudioContext();
-await audioContext.resume();
 
         // 오디오 컨텍스트
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -275,23 +272,18 @@ await audioContext.resume();
 // AI 루프 (안정 버전)
 // =========================
 function aiLoop() {
-    if (!isRunning || !window.classifier || !window.isAIReady) {
-    return;
-}
-
-    if (!isRunning) return;
 
     setTimeout(aiLoop, 300);
 
+    if (!isRunning) return;
+    if (!window.isAIReady) return;
+    if (!window.classifier) return;
+
     if (aiRunning) return;
-aiRunning = true;
 
-    // 🔥 AI 준비 전이면 대기
-    if (!window.isAIReady) {
-        return;
-    }
+    if (!analyser || !dataArray) return;
 
-    if (!analyser || !dataArray || !window.classifier) return;
+    aiRunning = true;
 
     analyser.getByteTimeDomainData(dataArray);
 
@@ -301,21 +293,28 @@ aiRunning = true;
         input[i] = (dataArray[i] - 128) / 128;
     }
 
-    try {
-        window.classifier.classify(input).then(result => {
-            if (!result?.classification) return;
+    window.classifier.classify(input)
+.then(result => {
 
-            const values = Object.values(result.classification);
-            const max = Math.max(...values);
-
-            if (max > 0.8) {
-                document.getElementById("warning").innerText = "AI 위험 감지!";
-            }
-        });
+    if (!result?.classification) {
         aiRunning = false;
-    } catch (e) {
-        console.log("AI error:", e);
+        return;
     }
+
+    const values = Object.values(result.classification);
+    const max = Math.max(...values);
+
+    if (max > 0.8) {
+        document.getElementById("warning").innerText =
+            "AI 위험 감지!";
+    }
+
+    aiRunning = false;
+})
+.catch(err => {
+    console.log(err);
+    aiRunning = false;
+});
 }
 
 // =========================
