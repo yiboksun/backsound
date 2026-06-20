@@ -213,13 +213,21 @@ function startApp() {
     document.getElementById("infoScreen").style.display = "flex";
 }
 
-async function enterMain() {
+    async function enterMain() {
 
     log("마이크 요청 중...");
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    let stream;
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+        log("마이크 권한 실패: " + e.message);
+        return;
+    }
 
     log("마이크 연결 성공!");
+
 
     audioContext = new AudioContext();
     await audioContext.resume();
@@ -251,6 +259,8 @@ function log(msg) {
 
 function draw() {
     requestAnimationFrame(draw);
+
+    if (!analyser || !dataArray) return
 
     analyser.getByteFrequencyData(dataArray);
 
