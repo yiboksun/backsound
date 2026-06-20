@@ -235,7 +235,6 @@ async function enterMain() {
     //classifier = new EdgeImpulseClassifier();
 //await classifier.init();
 
-    analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
 
     const mic = audioContext.createMediaStreamSource(stream);
@@ -254,17 +253,28 @@ async function enterMain() {
     console.log("AI 시작");
 
 console.log("AI 준비 완료");
+
+setInterval(async () => {
+    if (!classifier) return;
+
+    analyser.getByteTimeDomainData(dataArray);
+
+    const input = new Float32Array(dataArray.length);
+
+    for (let i = 0; i < dataArray.length; i++) {
+        input[i] = (dataArray[i] - 128) / 128;
+    }
+
+    const result = await classifier.classify(input);
+    console.log(result);
+
+}, 500);
 }
 
-// =========================
-// 소리 분석 루프
-// =========================
-async function draw() {
+function draw() {
     requestAnimationFrame(draw);
 
     analyser.getByteFrequencyData(dataArray);
-
-    console.log("sound[0] =", dataArray[0]);
 
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -276,29 +286,15 @@ async function draw() {
     document.getElementById("level").innerText =
         "SOUND: " + Math.round(avg);
 
-    // AI
-    /*if (classifier) {
-        analyser.getByteTimeDomainData(dataArray);
-
-        const input = new Float32Array(dataArray.length);
-
-        for (let i = 0; i < dataArray.length; i++) {
-            input[i] = (dataArray[i] - 128) / 128;
-        }
-
-        const result = await classifier.classify(input);
-        console.log(result);
-    }*/
-
     // 경고
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
         document.getElementById("warning").innerText = "큰 소리 감지!";
-         playBeep();
+        playBeep();
 
-    if (navigator.vibrate) {
-        navigator.vibrate([300, 100, 300]);
-    }
+        if (navigator.vibrate) {
+            navigator.vibrate([300, 100, 300]);
+        }
     } else {
         document.body.style.backgroundColor = "#111827";
         document.getElementById("warning").innerText = "";
