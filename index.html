@@ -266,7 +266,7 @@ console.log(classifier.getProperties());
   oscillator.start();
   oscillator.stop(audioContext.currentTime + 0.2);
 }
-
+const audioBuffer = [];
             const analyser = audioContext.createAnalyser();
             const microphone = audioContext.createMediaStreamSource(stream);
 
@@ -274,6 +274,75 @@ console.log(classifier.getProperties());
 
             analyser.fftSize = 256;
 
+            const processor = audioContext.createScriptProcessor(2048, 1, 1);
+
+microphone.connect(processor);
+processor.connect(audioContext.destination);
+
+processor.onaudioprocess = async (e) => {
+    const input = e.inputBuffer.getChannelData(0);
+
+    const result = await classifier.classify(input);
+
+    if (!result || !result.results) return;
+
+    const top = result.results.reduce((a, b) =>
+        a.value > b.value ? a : b
+    );
+
+    console.log("TOP:", top);
+
+    if (top.value >= 0.6) {
+        if (top.label === "car_horn" || top.label === "motorcycle") {
+            document.body.style.backgroundColor = "red";
+            document.getElementById("warning").innerText =
+                `위험 감지: ${top.label}`;
+        }
+    } else {
+        document.getElementById("warning").innerText = "";
+    }
+};
+
+    const input = e.inputBuffer.getChannelData(0);
+
+    const result = await classifier.classify(input);
+
+    if (!result || !result.results) return;
+
+    const top = result.results.reduce((a, b) =>
+        a.value > b.value ? a : b
+    );
+
+    console.log("TOP:", top);
+
+    if (top.value >= 0.6) {
+        if (top.label === "car_horn" || top.label === "motorcycle") {
+            document.body.style.backgroundColor = "red";
+            document.getElementById("warning").innerText =
+                `위험 감지: ${top.label}`;
+        }
+    } else {
+        document.getElementById("warning").innerText = "";
+    }
+};
+
+    const input = e.inputBuffer.getChannelData(0);
+
+    const result = await classifier.classify(input);
+
+    console.log("AI result:", result);
+
+    if (result && result.results) {
+        const top = result.results.reduce((a, b) => 
+            a.value > b.value ? a : b
+        );
+
+        if (top.label === "horn" && top.value > 0.7) {
+            document.body.style.backgroundColor = "red";
+            document.getElementById("warning").innerText = "AI: 위험 감지!";
+        }
+    }
+};
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
 
@@ -349,7 +418,7 @@ console.log(classifier.getProperties());
             }
 
             draw();
-        }
+    
 
 
     </script>
