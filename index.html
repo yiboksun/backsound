@@ -225,6 +225,13 @@ async function enterMain() {
 
     audioContext = new AudioContext();
 
+    await audioContext.resume();
+    console.log(audioContext.state);
+
+    console.log(stream.getAudioTracks());
+
+    analyser = audioContext.createAnalyser();
+
     classifier = new EdgeImpulseClassifier();
 await classifier.init();
 
