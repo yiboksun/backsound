@@ -232,8 +232,8 @@ async function enterMain() {
 
     analyser = audioContext.createAnalyser();
 
-    classifier = new EdgeImpulseClassifier();
-await classifier.init();
+    //classifier = new EdgeImpulseClassifier();
+//await classifier.init();
 
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
@@ -277,7 +277,7 @@ async function draw() {
         "SOUND: " + Math.round(avg);
 
     // AI
-    if (classifier) {
+    /*if (classifier) {
         analyser.getByteTimeDomainData(dataArray);
 
         const input = new Float32Array(dataArray.length);
@@ -288,7 +288,7 @@ async function draw() {
 
         const result = await classifier.classify(input);
         console.log(result);
-    }
+    }*/
 
     // 경고
     if (avg > 80) {
