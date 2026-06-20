@@ -232,8 +232,8 @@ async function enterMain() {
 
     analyser = audioContext.createAnalyser();
 
-    //classifier = new EdgeImpulseClassifier();
-//await classifier.init();
+    classifier = new EdgeImpulseClassifier();
+await classifier.init();
 
     analyser.fftSize = 256;
 
@@ -255,21 +255,22 @@ async function enterMain() {
 console.log("AI 준비 완료");
 
 setInterval(async () => {
-    if (!classifier) return;
 
-    analyser.getByteTimeDomainData(dataArray);
+        if (!classifier) return;
 
-    const input = new Float32Array(dataArray.length);
+        analyser.getByteTimeDomainData(dataArray);
 
-    for (let i = 0; i < dataArray.length; i++) {
-        input[i] = (dataArray[i] - 128) / 128;
-    }
+        const input = new Float32Array(dataArray.length);
 
-    const result = await classifier.classify(input);
-    console.log(result);
+        for (let i = 0; i < dataArray.length; i++) {
+            input[i] = (dataArray[i] - 128) / 128;
+        }
 
-}, 500);
-}
+        const result = await classifier.classify(input);
+
+        console.log("AI 결과:", result);
+
+    }, 300);
 
 function draw() {
     requestAnimationFrame(draw);
