@@ -223,8 +223,6 @@ console.log("마이크 성공:", stream);
     document.getElementById("infoScreen").style.display = "none";
     document.getElementById("mainScreen").style.display = "flex";
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
     audioContext = new AudioContext();
     await audioContext.resume();
 
