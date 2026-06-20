@@ -241,6 +241,12 @@ function startApp() {
     dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     canvas = document.getElementById("wave");
+
+    if (!canvas) {
+    log("canvas 없음");
+    return;
+}
+
     ctx = canvas.getContext("2d");
 
     canvas.width = window.innerWidth;
@@ -248,21 +254,24 @@ function startApp() {
 
     log("시각화 시작");
 
-    draw(); // 🔥 이거 꼭 있어야 화면 움직임
+    resizeCanvas();
 
-    setInterval(runAI, 300);
-}
+setTimeout(() => {
+    draw();
+}, 100);
+
+setInterval(runAI, 300);
+    }
 
 function log(msg) {
     document.getElementById("debug").innerText = msg;
 }
 
 function draw() {
-    requestAnimationFrame(draw);
-
-    if (!analyser || !dataArray) return
-
-    analyser.getByteFrequencyData(dataArray);
+    if (!analyser || !dataArray || !ctx) {
+        requestAnimationFrame(draw);
+        return;
+    }
 
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
