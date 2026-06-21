@@ -289,10 +289,11 @@ processor.onaudioprocess = function(e) {
 
     const input = e.inputBuffer.getChannelData(0);
 
+    window.lastSample = input[0];
+
     for (let i = 0; i < input.length; i++) {
         audioBuffer.push(input[i]);
 
-        window.lastSample = input[0];
     }
 
     if (audioBuffer.length > 48000) {
@@ -370,10 +371,13 @@ document.getElementById("aiResult").innerText =
             }
 
         });
-
-        /* document.getElementById("aiResult").innerText =
+document.getElementById("aiResult").innerText =
+    "Sample: " + window.lastSample;
+    
+         /*document.getElementById("aiResult").innerText =
     "AI: " + bestLabel + " (" + bestScore.toFixed(2) + ")";
     */
+    
 
         if (bestScore > 0.8) {
 
@@ -423,6 +427,9 @@ function playBeep() {
 // 시각화 루프
 // =========================
 function drawLoop() {
+document.getElementById("level").innerText =
+    "SOUND: " + Math.round(avg);
+
     requestAnimationFrame(drawLoop);
 
     if (!isRunning) return;
