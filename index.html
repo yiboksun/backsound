@@ -337,7 +337,7 @@ log("AI 실행중");
 
     aiRunning = true;
 
-    if (audioBuffer.length < 48000) {
+    if (audioBuffer.length < 12000) {
 
     document.getElementById("aiResult").innerText =
         "버퍼 수집중: " + audioBuffer.length;
@@ -347,18 +347,20 @@ log("AI 실행중");
 }
 
     const input = new Float32Array(
-        audioBuffer.slice(-48000)
-    );
+    audioBuffer.slice(-12000)
+);
 
-    try {
+try {
 
     const result =
-    window.classifier.classify(input);
+        window.classifier.classifyContinuous(input);
 
-document.getElementById("aiResult").innerText =
-    JSON.stringify(result.results);
+    document.getElementById("aiResult").innerText =
+    result.results
+        .map(r => `${r.label}: ${r.value.toFixed(3)}`)
+        .join(" | ");
 
-    if (result?.results) {
+     if (result?.results) {
 
         let bestLabel = "";
         let bestScore = 0;
@@ -392,8 +394,8 @@ catch(err) {
 }
 
 aiRunning = false;
-
 }
+
 
 function playBeep() {
 
