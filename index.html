@@ -371,9 +371,7 @@ document.getElementById("aiResult").innerText =
             }
 
         });
-document.getElementById("aiResult").innerText =
-    "Sample: " + window.lastSample;
-    
+
          /*document.getElementById("aiResult").innerText =
     "AI: " + bestLabel + " (" + bestScore.toFixed(2) + ")";
     */
@@ -427,8 +425,6 @@ function playBeep() {
 // 시각화 루프
 // =========================
 function drawLoop() {
-document.getElementById("level").innerText =
-    "SOUND: " + Math.round(avg);
 
     requestAnimationFrame(drawLoop);
 
@@ -444,8 +440,8 @@ document.getElementById("level").innerText =
 
     const avg = sum / dataArray.length;
 
-    document.getElementById("aiResult").innerText =
-    "Buffer: " + audioBuffer.length;
+    document.getElementById("level").innerText =
+    "SOUND: " + Math.round(avg);
 
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
