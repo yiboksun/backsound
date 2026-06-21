@@ -335,14 +335,14 @@ function aiLoop() {
     }
 
     if (audioBuffer.length < SAMPLE_WINDOW) {
-        document.getElementById("aiResult").innerText = "버퍼 수집중: " + audioBuffer.length;
+        document.getElementById("aiResult").innerText = "버퍼 수집중...";
         setTimeout(aiLoop, 250);
         return;
     }
 
     aiRunning = true;
 
-    // 소리 크기 분석 (주변이 조용할 때 오작동 방지)
+    // 데시벨(소리 크기) 분석으로 조용할 때 오작동 완벽 방지
     let currentVolume = 0;
     if (dataArray) {
         let sum = 0;
@@ -350,13 +350,12 @@ function aiLoop() {
         currentVolume = sum / dataArray.length;
     }
 
-    // 💡 소리가 작을 때는 카운터를 초기화하고 일상 소음으로 표시
+    // 💡 주변이 조용하면 무조건 '일상 소음'만 표시하고 리셋
     if (currentVolume < 45) { 
-        document.getElementById("aiResult").innerText = "일상 소음: 0.98";
-        
-        // 경고 상태 해제 및 카운터 리셋
+        document.getElementById("aiResult").innerText = "일상 소음";
         document.body.style.backgroundColor = "#111827";
         document.getElementById("warning").innerText = "";
+        
         hornCounter = 0;
         bikeCounter = 0;
 
@@ -372,59 +371,55 @@ function aiLoop() {
         const result = window.classifier.classify(input);
 
         if (result?.results) {
-            // 실시간 확률 텍스트 표시
-            let text = result.results
-                .map(r => `${r.label}: ${r.value.toFixed(3)}`)
-                .join(" | ");
-            document.getElementById("aiResult").innerText = text;
-
-            // 라벨별 확률 추출 (라벨 이름이 'horn', 'motorbike' 등 고유 이름인지 확인 필요)
             let hornScore = 0;
             let bikeScore = 0;
 
+            // 모델의 라벨 결과 읽기
             result.results.forEach(r => {
-                // 🔥 주의: Edge Impulse에 등록한 실제 라벨명과 일치해야 합니다. (예: "car", "horn", "bike" 등)
-                if (r.label.includes("경적") || r.label.toLowerCase().includes("Car born")) {
+                if (r.label.includes("경적") || r.label.toLowerCase().includes("horn")) {
                     hornScore = r.value;
                 }
-                if (r.label.includes("오토바이") || r.label.toLowerCase().includes("Motorcycle") || r.label.toLowerCase().includes("motor")) {
+                if (r.label.includes("오토바이") || r.label.toLowerCase().includes("bike") || r.label.toLowerCase().includes("motor")) {
                     bikeScore = r.value;
                 }
             });
 
-            // 🚨 1. 자동차 경적 체크 (0.9 이상)
-            if (hornScore >= 0.9) {
+            // 🚨 1. 자동차 경적 체크 (0.8 이상)
+            if (hornScore >= 0.8) {
                 hornCounter++;
-                bikeCounter = 0; // 다른 카운터는 리셋
+                bikeCounter = 0;
             } 
-            // 🚨 2. 오토바이 소리 체크 (0.9 이상)
-            else if (bikeScore >= 0.9) {
+            // 🚨 2. 오토바이 소리 체크 (0.8 이상)
+            else if (bikeScore >= 0.8) {
                 bikeCounter++;
-                hornCounter = 0; // 다른 카운터는 리셋
+                hornCounter = 0;
             } 
-            // 둘 다 아니면 카운터 차감 혹은 리셋
+            // 둘 다 기준 미달이면 카운터 리셋
             else {
-                if (hornCounter > 0) hornCounter--;
-                if (bikeCounter > 0) bikeCounter--;
+                hornCounter = 0;
+                bikeCounter = 0;
             }
 
-            // ⚠️ 1초(4번 연속 감지) 유지되었을 때 최종 알림 발생
-            if (hornCounter >= 4) {
+            // ⚠️ 0.5초(250ms 루프 기준 2번 연속 감지) 유지 시 즉시 작동
+            if (hornCounter >= 2) {
+                document.getElementById("aiResult").innerText = ""; // 숫자는 모두 숨김
                 document.body.style.backgroundColor = "red";
                 document.getElementById("warning").innerText = "🚨 자동차 경적 소리 감지 🚨";
                 
-                playBeep(); // 소리 알림
-                navigator.vibrate?.([300, 100, 300]); // 진동 알림
+                playBeep(); 
+                navigator.vibrate?.([300, 100, 300]); 
             } 
-            else if (bikeCounter >= 4) {
+            else if (bikeCounter >= 2) {
+                document.getElementById("aiResult").innerText = ""; // 숫자는 모두 숨김
                 document.body.style.backgroundColor = "red";
                 document.getElementById("warning").innerText = "🚨 오토바이 소리 감지 🚨";
                 
-                playBeep(); // 소리 알림
-                navigator.vibrate?.([300, 100, 300]); // 진동 알림
+                playBeep(); 
+                navigator.vibrate?.([300, 100, 300]); 
             } 
-            // 위험 상황이 아닐 때는 화면 원상복구
-            else if (hornCounter < 4 && bikeCounter < 4) {
+            // 큰 소리는 나지만 아직 0.5초 연속으로 채우지 못했을 때 기본 상태 유지
+            else {
+                document.getElementById("aiResult").innerText = "일상 소음";
                 document.body.style.backgroundColor = "#111827";
                 document.getElementById("warning").innerText = "";
             }
