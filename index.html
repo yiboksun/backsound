@@ -356,7 +356,7 @@ log("AI 실행중");
     window.classifier.classify(input);
 
 document.getElementById("aiResult").innerText =
-    "Sample: " + window.lastSample;
+    JSON.stringify(result.results);
 
     if (result?.results) {
 
