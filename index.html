@@ -337,7 +337,7 @@ log("AI 실행중");
 
     aiRunning = true;
 
-    if (audioBuffer.length < 12000) {
+    if (audioBuffer.length < 48000) {
 
     document.getElementById("aiResult").innerText =
         "버퍼 수집중: " + audioBuffer.length;
@@ -347,7 +347,7 @@ log("AI 실행중");
 }
 
     const input = new Float32Array(
-    audioBuffer.slice(-12000)
+    audioBuffer.slice(-48000)
 );
 
 try {
