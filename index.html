@@ -208,18 +208,18 @@ let canvas;
 let ctx;
 
 let audioBuffer = [];
-
 let isRunning = false;
-let hornCounter = 0;
-let bikeCounter = 0;
 
 const SAMPLE_WINDOW = 48000;
 
 // =========================
-// AI 상태
+// AI 상태 및 카운터 변수
 // =========================
 window.classifier = null;
 window.isAIReady = false;
+
+let hornCounter = 0;
+let bikeCounter = 0;
 
 // =========================
 // 시작
@@ -232,9 +232,6 @@ function startApp() {
 // =========================
 // 메인 진입
 // =========================
-// =========================
-// 메인 진입
-// =========================
 async function enterMain() {
     try {
         log("시작 중...");
@@ -242,33 +239,14 @@ async function enterMain() {
         document.getElementById("mainScreen").style.display = "flex";
         document.getElementById("infoScreen").style.display = "none";
 
-        // 🔥 AI 먼저 준비 (핵심)
         window.classifier = new EdgeImpulseClassifier();
 
         window.classifier.init()
         .then(() => {
             window.isAIReady = true;
-
-            console.log(
-                "Project:",
-                window.classifier.getProjectInfo()
-            );
-
-            console.log(
-                "Properties:",
-                window.classifier.getProperties()
-            );
-
-            document.getElementById("debug").innerText =
-            JSON.stringify(window.classifier.getProperties(), null, 2);
-
-            const props = window.classifier.getProperties();
-            console.log("props =", props);
-
-            for (const key in props) {
-                console.log(key, props[key]);
-            }
-
+            console.log("Project:", window.classifier.getProjectInfo());
+            console.log("Properties:", window.classifier.getProperties());
+            document.getElementById("debug").innerText = JSON.stringify(window.classifier.getProperties(), null, 2);
             log("AI 준비 완료");
         })
         .catch(err => {
@@ -276,7 +254,7 @@ async function enterMain() {
         });
 
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
+        
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         await audioContext.resume();
 
@@ -292,14 +270,10 @@ async function enterMain() {
 
         processor.onaudioprocess = function(e) {
             const input = e.inputBuffer.getChannelData(0);
-
             for (let i = 0; i < input.length; i++) {
-                // 🔥 핵심: -1.0 ~ 1.0의 Float32 데이터를 Edge Impulse가 원하는 -32768 ~ 32767 범위로 변환
                 let s = Math.max(-1, Math.min(1, input[i]));
                 audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
             }
-
-            // 버퍼가 무한정 커지지 않도록 윈도우 크기의 2배 정도로 제한
             if (audioBuffer.length > SAMPLE_WINDOW * 2) {
                 audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
             }
@@ -307,7 +281,6 @@ async function enterMain() {
 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        // 캔버스
         canvas = document.getElementById("wave");
         ctx = canvas.getContext("2d");
         resizeCanvas();
@@ -325,9 +298,8 @@ async function enterMain() {
 }
 
 // =========================
-// AI 루프 (안정 버전)
+// AI 루프 (오류 수정 버전)
 // =========================
-// drawLoop에서 계산되는 avg(소리 크기) 변수를 활용합니다.
 function aiLoop() {
     if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
         setTimeout(aiLoop, 250);
@@ -342,7 +314,7 @@ function aiLoop() {
 
     aiRunning = true;
 
-    // 데시벨(소리 크기) 분석으로 조용할 때 오작동 완벽 방지
+    // 소리 크기 분석
     let currentVolume = 0;
     if (dataArray) {
         let sum = 0;
@@ -350,7 +322,7 @@ function aiLoop() {
         currentVolume = sum / dataArray.length;
     }
 
-    // 💡 주변이 조용하면 무조건 '일상 소음'만 표시하고 리셋
+    // 💡 주변이 조용하면 기본 일상 소음 상태로 유지
     if (currentVolume < 45) { 
         document.getElementById("aiResult").innerText = "일상 소음";
         document.body.style.backgroundColor = "#111827";
@@ -374,7 +346,6 @@ function aiLoop() {
             let hornScore = 0;
             let bikeScore = 0;
 
-            // 모델의 라벨 결과 읽기
             result.results.forEach(r => {
                 if (r.label.includes("경적") || r.label.toLowerCase().includes("horn")) {
                     hornScore = r.value;
@@ -394,34 +365,38 @@ function aiLoop() {
                 bikeCounter++;
                 hornCounter = 0;
             } 
-            // 둘 다 기준 미달이면 카운터 리셋
             else {
                 hornCounter = 0;
                 bikeCounter = 0;
             }
 
-            // ⚠️ 0.5초(250ms 루프 기준 2번 연속 감지) 유지 시 즉시 작동
+            // ⚠️ 0.5초(2번 연속) 유지 시 확정 알림 및 문구 변경
             if (hornCounter >= 2) {
-                document.getElementById("aiResult").innerText = ""; // 숫자는 모두 숨김
+                // 💡 [수정] 일상 소음 글자를 지우고, 여기에 정확한 감지 문구를 띄웁니다!
+                document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
                 document.body.style.backgroundColor = "red";
-                document.getElementById("warning").innerText = "🚨 자동차 경적 소리 감지 🚨";
+                document.getElementById("warning").innerText = "🚨 위험 🚨";
                 
                 playBeep(); 
-                navigator.vibrate?.([300, 100, 300]); 
+                if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
             } 
             else if (bikeCounter >= 2) {
-                document.getElementById("aiResult").innerText = ""; // 숫자는 모두 숨김
+                // 💡 [수정] 일상 소음 글자를 지우고, 여기에 정확한 감지 문구를 띄웁니다!
+                document.getElementById("aiResult").innerText = "오토바이 소리 감지"; 
                 document.body.style.backgroundColor = "red";
-                document.getElementById("warning").innerText = "🚨 오토바이 소리 감지 🚨";
+                document.getElementById("warning").innerText = "🚨 위험 🚨";
                 
                 playBeep(); 
-                navigator.vibrate?.([300, 100, 300]); 
+                if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
             } 
-            // 큰 소리는 나지만 아직 0.5초 연속으로 채우지 못했을 때 기본 상태 유지
             else {
-                document.getElementById("aiResult").innerText = "일상 소음";
-                document.body.style.backgroundColor = "#111827";
-                document.getElementById("warning").innerText = "";
+                // 큰 소리는 나지만 조건 충족 전에는 일상 소음 유지
+                // 단, 아래 drawLoop에서 아주 큰 소리(80이상)로 판단하면 거기도 제어해줄 겁니다.
+                if (currentVolume < 80) {
+                    document.getElementById("aiResult").innerText = "일상 소음";
+                    document.body.style.backgroundColor = "#111827";
+                    document.getElementById("warning").innerText = "";
+                }
             }
         }
     }
@@ -433,14 +408,9 @@ function aiLoop() {
     setTimeout(aiLoop, 250);
 }
 
-
 function playBeep() {
-
-    const oscillator =
-        audioContext.createOscillator();
-
-    const gainNode =
-        audioContext.createGain();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
@@ -448,24 +418,18 @@ function playBeep() {
     oscillator.frequency.value = 1000;
     oscillator.type = "sine";
 
-    gainNode.gain.setValueAtTime(
-        0.2,
-        audioContext.currentTime
-    );
-
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
     oscillator.start();
-
-    oscillator.stop(
-        audioContext.currentTime + 0.2
-    );
+    oscillator.stop(audioContext.currentTime + 0.2);
 }
 
+// =========================
+// 시각화 루프 (UI 밀림 현상 해결)
+// =========================
 function drawLoop() {
-
     requestAnimationFrame(drawLoop);
 
-    if (!isRunning) return;
-    if (!analyser || !dataArray || !ctx) return;
+    if (!isRunning || !analyser || !dataArray || !ctx) return;
 
     analyser.getByteFrequencyData(dataArray);
 
@@ -473,27 +437,35 @@ function drawLoop() {
     for (let i = 0; i < dataArray.length; i++) {
         sum += dataArray[i];
     }
-
     const avg = sum / dataArray.length;
 
-    document.getElementById("level").innerText =
-    "SOUND: " + Math.round(avg);
+    document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
 
+    // 💡 [수정] 단순 데시벨이 80을 넘는 매우 큰 소리가 났을 때 처리
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
-        document.getElementById("warning").innerText = "큰 소리 감지!";
+        document.getElementById("warning").innerText = "🚨 위험 🚨";
+        
+        // 🔥 핵심: 큰 소리 감지 텍스트를 aiResult 칸에 넣어 일상소음을 지우고 한 칸씩 밀리는 것 방지!
+        document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
 
         playBeep();
-        navigator.vibrate(200);
+        if (navigator.vibrate) navigator.vibrate(200);
 
     } else {
-        document.body.style.backgroundColor = "#111827";
-        document.getElementById("warning").innerText = "";
+        // AI가 감지 중(카운터 작동 중)이 아닐 때만 맑은 상태로 복구
+        if (hornCounter < 2 && bikeCounter < 2) {
+            document.body.style.backgroundColor = "#111827";
+            document.getElementById("warning").innerText = "";
+            // 소리가 다시 작아졌고 AI 조건도 안 맞으면 일상 소음으로 복귀
+            if (avg >= 45) {
+                document.getElementById("aiResult").innerText = "일상 소음";
+            }
+        }
     }
 
-    // wave
+    // wave 그리기
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     let x = 0;
     const barWidth = (canvas.width / dataArray.length) * 1.5;
 
@@ -503,14 +475,10 @@ function drawLoop() {
 
         ctx.fillStyle = "white";
         ctx.fillRect(x, y, barWidth, barHeight);
-
         x += barWidth + 3;
     }
 }
 
-// =========================
-// 캔버스
-// =========================
 function resizeCanvas() {
     if (!canvas) return;
     canvas.width = window.innerWidth;
@@ -519,13 +487,7 @@ function resizeCanvas() {
 
 window.addEventListener("resize", resizeCanvas);
 
-// =========================
-// 로그
-// =========================
 function log(msg) {
-    document.getElementById("debug").innerText =
-        typeof msg === "object"
-            ? JSON.stringify(msg, null, 2)
-            : msg;
+    // 디버그 텍스트가 너무 길어 UI를 해치지 않도록 콘솔 로그로 대체하거나 간소화 가능
+    console.log(msg);
 }
-</script>
