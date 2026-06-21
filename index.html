@@ -350,18 +350,6 @@ log("AI 실행중");
     audioBuffer.slice(-12000)
 );
 
-const result =
-    window.classifier.classifyContinuous(input);
-
-console.log("input length =", input.length);
-
-console.log(
-    "min",
-    Math.min(...input),
-    "max",
-    Math.max(...input)
-);
-
 try {
 
 document.getElementById("aiResult").innerText =
@@ -372,15 +360,27 @@ document.getElementById("aiResult").innerText =
     const result =
     window.classifier.classifyContinuous(input);
 
+    console.log("input length =", input.length);
+
+console.log(
+    "min",
+    Math.min(...input),
+    "max",
+    Math.max(...input)
+);
+
+document.getElementById("aiResult").innerText =
+    JSON.stringify(result);
+
        /* document.getElementById("aiResult").innerText =
 result.results
 .map(r => `${r.label}:${r.value.toFixed(4)}`)
 .join("\n");*/
 
-    document.getElementById("aiResult").innerText =
+    /*document.getElementById("aiResult").innerText =
     result.results
         .map(r => `${r.label}: ${r.value.toFixed(3)}`)
-        .join(" | ");
+        .join(" | ");*/
 
      if (result?.results) {
 
