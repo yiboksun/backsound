@@ -291,8 +291,6 @@ processor.onaudioprocess = function(e) {
 
     const input = e.inputBuffer.getChannelData(0);
 
-    window.lastSample = input[0];
-
     for (let i = 0; i < input.length; i++) {
         audioBuffer.push(input[i]);
 
@@ -352,11 +350,6 @@ log("AI 실행중");
     audioBuffer.slice(-SAMPLE_WINDOW)
 );
 try {
-
-document.getElementById("aiResult").innerText =
-    "len=" + input.length +
-    "\nmin=" + Math.min(...input).toFixed(3) +
-    "\nmax=" + Math.max(...input).toFixed(3);
 
     const result =
     window.classifier.classifyContinuous(input);
@@ -517,6 +510,9 @@ window.addEventListener("resize", resizeCanvas);
 // 로그
 // =========================
 function log(msg) {
-    document.getElementById("debug").innerText = msg;
+    document.getElementById("debug").innerText =
+        typeof msg === "object"
+            ? JSON.stringify(msg, null, 2)
+            : msg;
 }
 </script>
