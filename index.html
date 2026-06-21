@@ -291,6 +291,8 @@ processor.onaudioprocess = function(e) {
 
     for (let i = 0; i < input.length; i++) {
         audioBuffer.push(input[i]);
+
+        window.lastSample = input[0];
     }
 
     if (audioBuffer.length > 48000) {
@@ -350,10 +352,10 @@ log("AI 실행중");
     try {
 
     const result =
-    window.classifier.classifyContinuous(input);
+    window.classifier.classify(input);
 
 document.getElementById("aiResult").innerText =
-    JSON.stringify(result.results);
+    "Sample: " + window.lastSample;
 
     if (result?.results) {
 
@@ -435,8 +437,8 @@ function drawLoop() {
 
     const avg = sum / dataArray.length;
 
-    document.getElementById("level").innerText =
-        "SOUND: " + Math.round(avg);
+    document.getElementById("aiResult").innerText =
+    "Buffer: " + audioBuffer.length;
 
     if (avg > 80) {
         document.body.style.backgroundColor = "red";
