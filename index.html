@@ -350,7 +350,15 @@ log("AI 실행중");
     audioBuffer.slice(-12000)
 );
 
+console.log(
+    "min",
+    Math.min(...input),
+    "max",
+    Math.max(...input)
+);
+
 try {
+input.fill(0);
 
     const result =
         window.classifier.classifyContinuous(input);
