@@ -327,7 +327,7 @@ function aiLoop() {
 
 log("AI 실행중");
 
-    setTimeout(aiLoop, 1000);
+    setTimeout(aiLoop, 250);
 
     if (!isRunning) return;
     if (!window.isAIReady) return;
@@ -354,6 +354,11 @@ try {
 
     const result =
         window.classifier.classifyContinuous(input);
+
+        document.getElementById("aiResult").innerText =
+result.results
+.map(r => `${r.label}:${r.value.toFixed(4)}`)
+.join("\n");
 
     document.getElementById("aiResult").innerText =
     result.results
