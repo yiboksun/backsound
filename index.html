@@ -366,13 +366,16 @@ console.log(
     Math.max(...input)
 );
 
-if (result?.results) {
+document.getElementById("aiResult").innerText =
+    JSON.stringify(result, null, 2);
+
+/*if (result?.results) {
     let text = result.results
         .map(r => `${r.label}: ${r.value.toFixed(3)}`)
         .join(" | ");
 
     document.getElementById("aiResult").innerText = text;
-}
+}*/
 
        /* document.getElementById("aiResult").innerText =
 result.results
