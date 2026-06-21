@@ -139,6 +139,13 @@
             font-weight: bold;
         }
 
+        #aiResult {
+            margin-top: 10px;
+            font-size: 28px;
+            color: rgb(255, 255, 255);
+            font-weight: bold;
+        }
+
         canvas {
             width: 100vw;
             height: 300px;
@@ -180,10 +187,11 @@
         </div>
     </div>
     <div id="mainScreen"> <canvas id="wave"></canvas>
-        <div id="ui">
-            <div id="level">SOUND: 0</div>
-            <div id="warning"></div>
-        </div>
+       <div id="ui">
+    <div id="level">SOUND: 0</div>
+    <div id="aiResult">AI: 대기중</div>
+    <div id="warning"></div>
+</div>
     </div>
 <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
 <script src="edge-impulse-standalone.js"></script>
@@ -328,11 +336,12 @@ log("AI 실행중");
 
     if (audioBuffer.length < 48000) {
 
-        log("버퍼 수집중: " + audioBuffer.length);
+    document.getElementById("aiResult").innerText =
+        "버퍼 수집중: " + audioBuffer.length;
 
-        aiRunning = false;
-        return;
-    }
+    aiRunning = false;
+    return;
+}
 
     const input = new Float32Array(
         audioBuffer.slice(-48000)
@@ -341,9 +350,9 @@ log("AI 실행중");
     try {
 
     const result =
-        window.classifier.classify(input);
+    window.classifier.classifyContinuous(input);
 
-    document.getElementById("debug").innerText =
+    document.getElementById("aiResult").innerText =
     JSON.stringify(result);
 
     if (result?.results) {
@@ -360,8 +369,8 @@ log("AI 실행중");
 
         });
 
-         document.getElementById("debug").innerText =
-        bestLabel + " : " + bestScore.toFixed(2);
+         document.getElementById("aiResult").innerText =
+    "AI: " + bestLabel + " (" + bestScore.toFixed(2) + ")";
 
         if (bestScore > 0.8) {
 
@@ -379,6 +388,32 @@ catch(err) {
 
 aiRunning = false;
 
+}
+
+function playBeep() {
+
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gainNode =
+        audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 1000;
+    oscillator.type = "sine";
+
+    gainNode.gain.setValueAtTime(
+        0.2,
+        audioContext.currentTime
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+        audioContext.currentTime + 0.2
+    );
 }
 
 // =========================
