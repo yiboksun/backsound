@@ -259,10 +259,10 @@ for (const key in props) {
 .catch(err => {
     log("AI 실패: " + err.message);
 });
-        // 마이크 권한
+
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        // 오디오 컨텍스트
+        
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         await audioContext.resume();
 
@@ -272,7 +272,6 @@ analyser.fftSize = 256;
 const mic = audioContext.createMediaStreamSource(micStream);
 mic.connect(analyser);
 
-// AI용 실제 오디오 샘플 수집
 const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
 mic.connect(processor);
@@ -286,7 +285,6 @@ processor.onaudioprocess = function(e) {
         audioBuffer.push(input[i]);
     }
 
-    // 최대 48000개 유지
     if (audioBuffer.length > 48000) {
         audioBuffer = audioBuffer.slice(-48000);
     }
@@ -316,6 +314,8 @@ processor.onaudioprocess = function(e) {
 // =========================
 function aiLoop() {
 
+log("AI 실행중");
+
     setTimeout(aiLoop, 1000);
 
     if (!isRunning) return;
@@ -327,6 +327,9 @@ function aiLoop() {
     aiRunning = true;
 
     if (audioBuffer.length < 48000) {
+
+        log("버퍼 수집중: " + audioBuffer.length);
+
         aiRunning = false;
         return;
     }
@@ -340,8 +343,8 @@ function aiLoop() {
     const result =
         window.classifier.classify(input);
 
-    console.log("전체 결과:", result);
-    console.log("results:", result.results);
+    document.getElementById("debug").innerText =
+    JSON.stringify(result);
 
     if (result?.results) {
 
@@ -356,6 +359,9 @@ function aiLoop() {
             }
 
         });
+
+         document.getElementById("debug").innerText =
+        bestLabel + " : " + bestScore.toFixed(2);
 
         if (bestScore > 0.8) {
 
