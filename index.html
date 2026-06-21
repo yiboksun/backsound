@@ -211,6 +211,8 @@ let audioBuffer = [];
 
 let isRunning = false;
 
+const SAMPLE_WINDOW = 16000;
+
 // =========================
 // AI 상태
 // =========================
@@ -296,9 +298,9 @@ processor.onaudioprocess = function(e) {
 
     }
 
-    if (audioBuffer.length > 48000) {
-        audioBuffer = audioBuffer.slice(-48000);
-    }
+    if (audioBuffer.length > SAMPLE_WINDOW * 2) {
+    audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
+}
 };
 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -337,7 +339,7 @@ log("AI 실행중");
 
     aiRunning = true;
 
-    if (audioBuffer.length < 48000) {
+    if (audioBuffer.length < SAMPLE_WINDOW) {
 
     document.getElementById("aiResult").innerText =
         "버퍼 수집중: " + audioBuffer.length;
@@ -347,9 +349,8 @@ log("AI 실행중");
 }
 
     const input = new Float32Array(
-    audioBuffer.slice(-48000)
+    audioBuffer.slice(-SAMPLE_WINDOW)
 );
-
 try {
 
 document.getElementById("aiResult").innerText =
@@ -358,7 +359,7 @@ document.getElementById("aiResult").innerText =
     "\nmax=" + Math.max(...input).toFixed(3);
 
     const result =
-    window.classifier.classify(input);
+    window.classifier.classifyContinuous(input);
 
     console.log("input length =", input.length);
 
