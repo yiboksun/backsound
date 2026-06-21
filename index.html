@@ -210,6 +210,8 @@ let ctx;
 let audioBuffer = [];
 
 let isRunning = false;
+let hornCounter = 0;
+let bikeCounter = 0;
 
 const SAMPLE_WINDOW = 48000;
 
@@ -340,20 +342,24 @@ function aiLoop() {
 
     aiRunning = true;
 
-    // 💡 [야매 팁 1] 소리 크기가 너무 작으면 AI 분석을 무시하고 '안전/일상소음'으로 표시
-    // 기준 점수(예: 40)는 조용한 곳에서 테스트해보며 맞춰보세요.
-    let currentVolume = typeof avg !== 'undefined' ? avg : 50; 
-    
-    // 만약 drawLoop의 avg를 가져오기 힘들다면, 현재 frequency 데이터로 간이 계산
+    // 소리 크기 분석 (주변이 조용할 때 오작동 방지)
+    let currentVolume = 0;
     if (dataArray) {
         let sum = 0;
         for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
         currentVolume = sum / dataArray.length;
     }
 
-    if (currentVolume < 45) { // 👈 소음 기준선 (소리가 작을 때)
-        document.getElementById("aiResult").innerText = "일상 소음: 0.98 | 안전함";
+    // 💡 소리가 작을 때는 카운터를 초기화하고 일상 소음으로 표시
+    if (currentVolume < 45) { 
+        document.getElementById("aiResult").innerText = "일상 소음: 0.98";
+        
+        // 경고 상태 해제 및 카운터 리셋
+        document.body.style.backgroundColor = "#111827";
         document.getElementById("warning").innerText = "";
+        hornCounter = 0;
+        bikeCounter = 0;
+
         aiRunning = false;
         setTimeout(aiLoop, 250);
         return;
@@ -366,27 +372,60 @@ function aiLoop() {
         const result = window.classifier.classify(input);
 
         if (result?.results) {
-            let bestLabel = "";
-            let bestScore = 0;
-
-            result.results.forEach(r => {
-                if (r.value > bestScore) {
-                    bestScore = r.value;
-                    bestLabel = r.label;
-                }
-            });
-
-            // 💡 [야매 팁 2] 큰 소리가 났고, 특정 확률 이상일 때만 진짜 변하는 수치 보여주기
+            // 실시간 확률 텍스트 표시
             let text = result.results
                 .map(r => `${r.label}: ${r.value.toFixed(3)}`)
                 .join(" | ");
             document.getElementById("aiResult").innerText = text;
 
-            // 기준치를 0.85 정도로 높여서 확실할 때만 경고
-            if (bestScore > 0.85) { 
-                document.getElementById("warning").innerText = bestLabel + "감지";
-                navigator.vibrate?.([300, 100, 300]);
-            } else {
+            // 라벨별 확률 추출 (라벨 이름이 'horn', 'motorbike' 등 고유 이름인지 확인 필요)
+            let hornScore = 0;
+            let bikeScore = 0;
+
+            result.results.forEach(r => {
+                // 🔥 주의: Edge Impulse에 등록한 실제 라벨명과 일치해야 합니다. (예: "car", "horn", "bike" 등)
+                if (r.label.includes("경적") || r.label.toLowerCase().includes("Car born")) {
+                    hornScore = r.value;
+                }
+                if (r.label.includes("오토바이") || r.label.toLowerCase().includes("Motorcycle") || r.label.toLowerCase().includes("motor")) {
+                    bikeScore = r.value;
+                }
+            });
+
+            // 🚨 1. 자동차 경적 체크 (0.9 이상)
+            if (hornScore >= 0.9) {
+                hornCounter++;
+                bikeCounter = 0; // 다른 카운터는 리셋
+            } 
+            // 🚨 2. 오토바이 소리 체크 (0.9 이상)
+            else if (bikeScore >= 0.9) {
+                bikeCounter++;
+                hornCounter = 0; // 다른 카운터는 리셋
+            } 
+            // 둘 다 아니면 카운터 차감 혹은 리셋
+            else {
+                if (hornCounter > 0) hornCounter--;
+                if (bikeCounter > 0) bikeCounter--;
+            }
+
+            // ⚠️ 1초(4번 연속 감지) 유지되었을 때 최종 알림 발생
+            if (hornCounter >= 4) {
+                document.body.style.backgroundColor = "red";
+                document.getElementById("warning").innerText = "🚨 자동차 경적 소리 감지 🚨";
+                
+                playBeep(); // 소리 알림
+                navigator.vibrate?.([300, 100, 300]); // 진동 알림
+            } 
+            else if (bikeCounter >= 4) {
+                document.body.style.backgroundColor = "red";
+                document.getElementById("warning").innerText = "🚨 오토바이 소리 감지 🚨";
+                
+                playBeep(); // 소리 알림
+                navigator.vibrate?.([300, 100, 300]); // 진동 알림
+            } 
+            // 위험 상황이 아닐 때는 화면 원상복구
+            else if (hornCounter < 4 && bikeCounter < 4) {
+                document.body.style.backgroundColor = "#111827";
                 document.getElementById("warning").innerText = "";
             }
         }
@@ -426,9 +465,6 @@ function playBeep() {
     );
 }
 
-// =========================
-// 시각화 루프
-// =========================
 function drawLoop() {
 
     requestAnimationFrame(drawLoop);
