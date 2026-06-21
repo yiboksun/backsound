@@ -370,8 +370,13 @@ console.log(
     Math.max(...input)
 );
 
-document.getElementById("aiResult").innerText =
-    JSON.stringify(result);
+if (result?.results) {
+    let text = result.results
+        .map(r => `${r.label}: ${r.value.toFixed(3)}`)
+        .join(" | ");
+
+    document.getElementById("aiResult").innerText = text;
+}
 
        /* document.getElementById("aiResult").innerText =
 result.results
