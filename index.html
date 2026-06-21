@@ -360,7 +360,6 @@ console.log(
 );
 
 try {
-input.fill(0);
 
 document.getElementById("aiResult").innerText =
     "len=" + input.length +
@@ -370,10 +369,10 @@ document.getElementById("aiResult").innerText =
     const result =
     window.classifier.classify(input);
 
-        document.getElementById("aiResult").innerText =
+       /* document.getElementById("aiResult").innerText =
 result.results
 .map(r => `${r.label}:${r.value.toFixed(4)}`)
-.join("\n");
+.join("\n");*/
 
     document.getElementById("aiResult").innerText =
     result.results
