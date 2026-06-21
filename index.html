@@ -352,8 +352,8 @@ log("AI 실행중");
     const result =
     window.classifier.classifyContinuous(input);
 
-    document.getElementById("aiResult").innerText =
-    JSON.stringify(result);
+document.getElementById("aiResult").innerText =
+    JSON.stringify(result.results);
 
     if (result?.results) {
 
@@ -369,8 +369,9 @@ log("AI 실행중");
 
         });
 
-         document.getElementById("aiResult").innerText =
+        /* document.getElementById("aiResult").innerText =
     "AI: " + bestLabel + " (" + bestScore.toFixed(2) + ")";
+    */
 
         if (bestScore > 0.8) {
 
