@@ -302,6 +302,8 @@ processor.onaudioprocess = function(e) {
     if (audioBuffer.length > SAMPLE_WINDOW * 2) {
     audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
 }
+ document.getElementById("debug").innerText =
+    audioBuffer.slice(-10);
 };
 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
