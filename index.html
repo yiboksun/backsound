@@ -211,7 +211,7 @@ let audioBuffer = [];
 
 let isRunning = false;
 
-const SAMPLE_WINDOW = 16000;
+const SAMPLE_WINDOW = 48000;
 
 // =========================
 // AI 상태
@@ -254,6 +254,9 @@ window.classifier.init()
         "Properties:",
         window.classifier.getProperties()
     );
+
+    document.getElementById("debug").innerText =
+JSON.stringify(window.classifier.getProperties(), null, 2);
 
     const props = window.classifier.getProperties();
 
@@ -347,12 +350,12 @@ log("AI 실행중");
 }
 
     const input = new Float32Array(
-    audioBuffer.slice(-SAMPLE_WINDOW)
+    audioBuffer.slice(-48000)
 );
 try {
 
     const result =
-    window.classifier.classifyContinuous(input);
+    window.classifier.classify(input);
 
     console.log("input length =", input.length);
 
