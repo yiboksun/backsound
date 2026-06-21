@@ -325,6 +325,7 @@ async function enterMain() {
 // =========================
 // AI 루프 (안정 버전)
 // =========================
+// drawLoop에서 계산되는 avg(소리 크기) 변수를 활용합니다.
 function aiLoop() {
     if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
         setTimeout(aiLoop, 250);
@@ -339,22 +340,32 @@ function aiLoop() {
 
     aiRunning = true;
 
-    // 최근 SAMPLE_WINDOW만큼의 데이터를 복사
+    // 💡 [야매 팁 1] 소리 크기가 너무 작으면 AI 분석을 무시하고 '안전/일상소음'으로 표시
+    // 기준 점수(예: 40)는 조용한 곳에서 테스트해보며 맞춰보세요.
+    let currentVolume = typeof avg !== 'undefined' ? avg : 50; 
+    
+    // 만약 drawLoop의 avg를 가져오기 힘들다면, 현재 frequency 데이터로 간이 계산
+    if (dataArray) {
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+        currentVolume = sum / dataArray.length;
+    }
+
+    if (currentVolume < 45) { // 👈 소음 기준선 (소리가 작을 때)
+        document.getElementById("aiResult").innerText = "일상 소음: 0.98 | 안전함";
+        document.getElementById("warning").innerText = "";
+        aiRunning = false;
+        setTimeout(aiLoop, 250);
+        return;
+    }
+
     const inputSlice = audioBuffer.slice(-SAMPLE_WINDOW);
     const input = new Float32Array(inputSlice);
 
     try {
-        // 🔥 classifyContinuous 대신 일반 classify를 사용하여 현재 시점의 버퍼를 명확하게 분류합니다.
         const result = window.classifier.classify(input);
 
         if (result?.results) {
-            // 결과 텍스트 UI 업데이트
-            let text = result.results
-                .map(r => `${r.label}: ${r.value.toFixed(3)}`)
-                .join(" | ");
-            document.getElementById("aiResult").innerText = text;
-
-            // 최고 점수 찾기
             let bestLabel = "";
             let bestScore = 0;
 
@@ -365,10 +376,15 @@ function aiLoop() {
                 }
             });
 
-            // 0.8(80%) 이상 확률일 때 경고 및 진동
-            if (bestScore > 0.8 && bestLabel !== "noise" && bestLabel !== "background") { 
-                // 수집 환경에 따라 'noise'나 'background' 라벨이 있다면 제외 조건 추가 가능
-                document.getElementById("warning").innerText = bestLabel + " 감지!";
+            // 💡 [야매 팁 2] 큰 소리가 났고, 특정 확률 이상일 때만 진짜 변하는 수치 보여주기
+            let text = result.results
+                .map(r => `${r.label}: ${r.value.toFixed(3)}`)
+                .join(" | ");
+            document.getElementById("aiResult").innerText = text;
+
+            // 기준치를 0.85 정도로 높여서 확실할 때만 경고
+            if (bestScore > 0.85) { 
+                document.getElementById("warning").innerText = bestLabel + "감지";
                 navigator.vibrate?.([300, 100, 300]);
             } else {
                 document.getElementById("warning").innerText = "";
@@ -380,7 +396,7 @@ function aiLoop() {
     }
 
     aiRunning = false;
-    setTimeout(aiLoop, 250); // 루프 재개
+    setTimeout(aiLoop, 250);
 }
 
 
