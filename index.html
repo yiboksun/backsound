@@ -362,6 +362,11 @@ console.log(
 try {
 input.fill(0);
 
+document.getElementById("aiResult").innerText =
+    "len=" + input.length +
+    "\nmin=" + Math.min(...input).toFixed(3) +
+    "\nmax=" + Math.max(...input).toFixed(3);
+
     const result =
     window.classifier.classify(input);
 
