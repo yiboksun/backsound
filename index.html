@@ -350,12 +350,12 @@ log("AI 실행중");
 }
 
     const input = new Float32Array(
-    audioBuffer.slice(-48000)
+    audioBuffer.slice(-SAMPLE_WINDOW)
 );
+
 try {
 
-    const result =
-    window.classifier.classify(input);
+    const result = window.classifier.classifyContinuous(input);
 
     console.log("input length =", input.length);
 
@@ -366,16 +366,13 @@ console.log(
     Math.max(...input)
 );
 
-document.getElementById("aiResult").innerText =
-    JSON.stringify(result, null, 2);
-
-/*if (result?.results) {
+if (result?.results) {
     let text = result.results
         .map(r => `${r.label}: ${r.value.toFixed(3)}`)
         .join(" | ");
 
     document.getElementById("aiResult").innerText = text;
-}*/
+}
 
        /* document.getElementById("aiResult").innerText =
 result.results
