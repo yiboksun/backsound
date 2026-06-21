@@ -274,11 +274,6 @@ for (const key in props) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         await audioContext.resume();
 
-        alert(
-    "sampleRate = " +
-    audioContext.sampleRate
-);
-
         analyser = audioContext.createAnalyser();
 analyser.fftSize = 256;
 
@@ -342,7 +337,7 @@ log("AI 실행중");
 
     aiRunning = true;
 
-    if (audioBuffer.length < 48000) {
+    if (audioBuffer.length < 12000) {
 
     document.getElementById("aiResult").innerText =
         "버퍼 수집중: " + audioBuffer.length;
@@ -352,8 +347,11 @@ log("AI 실행중");
 }
 
     const input = new Float32Array(
-    audioBuffer.slice(-48000)
+    audioBuffer.slice(-12000)
 );
+
+const result =
+    window.classifier.classifyContinuous(input);
 
 console.log("input length =", input.length);
 
@@ -372,7 +370,7 @@ document.getElementById("aiResult").innerText =
     "\nmax=" + Math.max(...input).toFixed(3);
 
     const result =
-    window.classifier.classify(input);
+    window.classifier.classifyContinuous(input);
 
        /* document.getElementById("aiResult").innerText =
 result.results
