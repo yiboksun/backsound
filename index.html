@@ -7,7 +7,8 @@
     <style>
         body {
             margin: 0;
-            background-color: #111827;
+    background-color:white;
+    color:black;
             font-family: Arial;
             overflow: hidden;
         }
@@ -121,7 +122,7 @@
             top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
+            color: rgb(0, 0, 0);
             font-size: 26px;
             text-align: center;
             z-index: 10;
@@ -135,14 +136,14 @@
         #warning {
             margin-top: 10px;
             font-size: 28px;
-            color: rgb(255, 255, 255);
+            color: rgb(255, 0, 0);
             font-weight: bold;
         }
 
         #aiResult {
             margin-top: 10px;
             font-size: 28px;
-            color: rgb(255, 255, 255);
+            color: rgb(0, 0, 0);
             font-weight: bold;
         }
 
@@ -151,46 +152,94 @@
             height: 300px;
         }
 
+        #mainScreen{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+}
+
+#bottomNav{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:80px;
+
+    background:white;
+    border-top:1px solid #dcdcdc;
+
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+
+    border-top:1px solid #333;
+
+    z-index:100;
+}
+
+.navItem{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    color:black;
+    font-size:13px;
+    cursor:pointer;
+}
+
+.navItem img{
+    width:30px;
+    height:30px;
+    margin-bottom:4px;
+}
+
+.navItem.active{
+   color:black;
+    font-weight:bold;
+}
+
+canvas{
+    margin-bottom:90px;
+}
+
     
     </style>
 </head>
 
 <body>
-    <div id="startScreen">
-        <h1>🎧 Back Sound</h1> <button onclick="startApp()"> 시작하기 </button>
-    </div>
-    <div id="infoScreen" style="display:none;">
-        <div id="infoBox">
-            <h2>Back Sound</h2>
-            <div id="infoText">
-                <h3>[Back Sound 앱 소개]</h3>
-                <p class="centerText">안녕하세요. 보행 중 안전을 지키는 스마트 보조 시스템 Back Sound입니다. </p>
-                <p class="centerText">Back Sound는 이어폰 사용 시 주변 소리를 놓치기 쉬운 문제를 해결하기 위해,</p>
-                <p>실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는 보행 안전 보조 앱입니다.</p>
-                <h4>[주요 기능]</h4>
-                <p> Back Sound는 주변 소리를 지속적으로 분석하여</p>
-                <p> 평소보다 큰 소음이 발생하면 위험 상황으로 판단하고 사용자에게 알려줍니다.</p>
-                <p>위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을 인지할 수 있도록 도와줍니다.</p>
-                <p>또한 현재 주변 소리의 크기를 실시간으로 확인할 수 있어</p>
-                <p>보행 중에도 주변 환경 변화를 쉽게 파악할 수 있습니다.</p>
-                <h5>[사용 방법]</h5>
-                <p> 1. 앱을 실행합니다.</p>
-                <p> 2. 마이크 사용 권한을 허용합니다.</p>
-                <p>3. 앱이 자동으로 주변 소리를 분석하기 시작합니다.</p>
-                <p>4. 위험 소음이 감지되면 화면 경고가 표시됩니다.</p>
-                <p>5. Android 기기에서는 진동 알림이 함께 제공됩니다.</p>
-                <p style="margin-top: 80px;"> ※ iPhone 사용자는 Safari 브라우저 사용을 권장합니다. </p>
-                <p>※ 브라우저 및 기기 환경에 따라 일부 기능이 다르게 동작할 수 있습니다.</p>
-                <p>※ 마이크 사용 권한이 허용되어야 정상적으로 사용할 수 있습니다.</p>
-                <p style="margin-top: 80px;"> Back Sound와 함께 더욱 안전한 보행 환경을 경험해 보세요. </p>
-            </div> <button onclick="enterMain()">확인</button>
-        </div>
-    </div>
-    <div id="mainScreen"> <canvas id="wave"></canvas>
+   <div id="mainScreen" style="display:flex;"> <canvas id="wave"></canvas>
        <div id="ui">
     <div id="level">SOUND: 0</div>
     <div id="aiResult">AI: 대기중</div>
     <div id="warning"></div>
+    <div id="bottomNav">
+
+    <div class="navItem">
+        <img src="기록-removebg-preview.png">
+        <span>기록</span>
+    </div>
+
+    <div class="navItem">
+        <img src="가이드-removebg-preview.png">
+        <span>가이드</span>
+    </div>
+
+    <div class="navItem active">
+        <img src="홈-removebg-preview.png">
+        <span>홈</span>
+    </div>
+
+    <div class="navItem">
+        <img src="지도-removebg-preview.png">
+        <span>설정</span>
+    </div>
+
+    <div class="navItem">
+        <img src="내_정보-removebg-preview.png">
+        <span>정보</span>
+    </div>
+
+</div>
 </div>
     </div>
 <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
@@ -216,26 +265,14 @@ let bikeCounter = 0;
 
 const SAMPLE_WINDOW = 48000;
 
-// =========================
-// AI 상태
-// =========================
 window.classifier = null;
 window.isAIReady = false;
 
-// =========================
-// 시작
-// =========================
 function startApp() {
     document.getElementById("startScreen").style.display = "none";
     document.getElementById("infoScreen").style.display = "flex";
 }
 
-// =========================
-// 메인 진입
-// =========================
-// =========================
-// 메인 진입
-// =========================
 async function enterMain() {
     try {
         log("시작 중...");
@@ -243,7 +280,6 @@ async function enterMain() {
         document.getElementById("mainScreen").style.display = "flex";
         document.getElementById("infoScreen").style.display = "none";
 
-        // 🔥 AI 먼저 준비 (핵심)
         window.classifier = new EdgeImpulseClassifier();
 
         window.classifier.init()
@@ -295,12 +331,12 @@ async function enterMain() {
             const input = e.inputBuffer.getChannelData(0);
 
             for (let i = 0; i < input.length; i++) {
-                // 🔥 핵심: -1.0 ~ 1.0의 Float32 데이터를 Edge Impulse가 원하는 -32768 ~ 32767 범위로 변환
+        
                 let s = Math.max(-1, Math.min(1, input[i]));
                 audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
             }
 
-            // 버퍼가 무한정 커지지 않도록 윈도우 크기의 2배 정도로 제한
+            
             if (audioBuffer.length > SAMPLE_WINDOW * 2) {
                 audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
             }
@@ -308,7 +344,7 @@ async function enterMain() {
 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        // 캔버스
+       
         canvas = document.getElementById("wave");
         ctx = canvas.getContext("2d");
         resizeCanvas();
@@ -325,10 +361,6 @@ async function enterMain() {
     }
 }
 
-// =========================
-// AI 루프 (안정 버전)
-// =========================
-// drawLoop에서 계산되는 avg(소리 크기) 변수를 활용합니다.
 function aiLoop() {
     if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
         setTimeout(aiLoop, 250);
@@ -343,7 +375,6 @@ function aiLoop() {
 
     aiRunning = true;
 
-    // 데시벨(소리 크기) 분석으로 조용할 때 오작동 완벽 방지
     let currentVolume = 0;
     if (dataArray) {
         let sum = 0;
@@ -351,10 +382,9 @@ function aiLoop() {
         currentVolume = sum / dataArray.length;
     }
 
-    // 💡 주변이 조용하면 무조건 '일상 소음'만 표시하고 리셋
     if (currentVolume < 45) { 
         document.getElementById("aiResult").innerText = "일상 소음";
-        document.body.style.backgroundColor = "#111827";
+        document.body.style.backgroundColor = "white";
         document.getElementById("warning").innerText = "";
         
         hornCounter = 0;
@@ -375,7 +405,6 @@ function aiLoop() {
             let hornScore = 0;
             let bikeScore = 0;
 
-            // 모델의 라벨 결과 읽기
             result.results.forEach(r => {
                 if (r.label.includes("경적") || r.label.toLowerCase().includes("horn")) {
                     hornScore = r.value;
@@ -385,24 +414,21 @@ function aiLoop() {
                 }
             });
 
-            // 🚨 1. 자동차 경적 체크 (0.8 이상)
             if (hornScore >= 0.8) {
                 hornCounter++;
                 bikeCounter = 0;
             } 
-            // 🚨 2. 오토바이 소리 체크 (0.8 이상)
+           
             else if (bikeScore >= 0.8) {
                 bikeCounter++;
                 hornCounter = 0;
             } 
-            // 둘 다 기준 미달이면 카운터 리셋
+           
             else {
                 hornCounter = 0;
                 bikeCounter = 0;
             }
 
-            // ⚠️ 0.5초(250ms 루프 기준 2번 연속 감지) 유지 시 즉시 작동
-            // ⚠️ 0.5초(2번 연속 감지) 유지 시 즉시 작동
 if (hornCounter >= 2) {
     document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
     document.body.style.backgroundColor = "red";
@@ -419,7 +445,7 @@ else if (bikeCounter >= 2) {
     playBeep(); 
     if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
 }
-            // 큰 소리는 나지만 아직 0.5초 연속으로 채우지 못했을 때 기본 상태 유지
+
             else {
                 document.getElementById("aiResult").innerText = "일상 소음";
                 document.body.style.backgroundColor = "#111827";
@@ -483,14 +509,14 @@ function drawLoop() {
 
     if (avg > 80) {
     document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "🚨 위험 🚨";
-    document.getElementById("aiResult").innerText = "큰 소리 감지!"; // 👈 여기에 넣어 일상소음을 지웁니다.
+    document.getElementById("warning").innerText = "위험";
+    document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
 
     playBeep();
     if (navigator.vibrate) navigator.vibrate(200);
 
 } else {
-    // AI가 위험을 감지한 상태가 아닐 때만 평소 상태로 복구
+   
     if (hornCounter < 2 && bikeCounter < 2) {
         document.body.style.backgroundColor = "#111827";
         document.getElementById("warning").innerText = "";
@@ -500,7 +526,7 @@ function drawLoop() {
     }
 }
 
-    // wave
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let x = 0;
@@ -510,16 +536,13 @@ function drawLoop() {
         const barHeight = dataArray[i] * 1.7;
         const y = (canvas.height - barHeight) / 2;
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "black";
         ctx.fillRect(x, y, barWidth, barHeight);
 
         x += barWidth + 3;
     }
 }
 
-// =========================
-// 캔버스
-// =========================
 function resizeCanvas() {
     if (!canvas) return;
     canvas.width = window.innerWidth;
@@ -528,13 +551,14 @@ function resizeCanvas() {
 
 window.addEventListener("resize", resizeCanvas);
 
-// =========================
-// 로그
-// =========================
 function log(msg) {
     document.getElementById("debug").innerText =
         typeof msg === "object"
             ? JSON.stringify(msg, null, 2)
             : msg;
 }
+
+window.onload = () => {
+    enterMain();
+};
 </script>
