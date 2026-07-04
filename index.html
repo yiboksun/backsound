@@ -186,11 +186,6 @@ const SAMPLE_WINDOW = 48000;
 window.classifier = null;
 window.isAIReady = false;
 
-function startApp() {
-    document.getElementById("startScreen").style.display = "none";
-    document.getElementById("infoScreen").style.display = "flex";
-}
-
 async function enterMain() {
     try {
         log("시작 중...");
