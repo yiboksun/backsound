@@ -195,9 +195,6 @@ async function enterMain() {
     try {
         log("시작 중...");
 
-        document.getElementById("mainScreen").style.display = "flex";
-        document.getElementById("infoScreen").style.display = "none";
-
         window.classifier = new EdgeImpulseClassifier();
 
         window.classifier.init()
@@ -477,7 +474,8 @@ function log(msg) {
 }
 
 window.onload = () => {
-    // 화면을 한 번 터치하거나 클릭하면 바로 enterMain()을 실행함
+    document.getElementById("aiResult").innerText = "화면을 터치하면 시작합니다";
+    
     window.addEventListener("click", enterMain, { once: true });
     window.addEventListener("touchstart", enterMain, { once: true });
 };
