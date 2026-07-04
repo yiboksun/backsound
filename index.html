@@ -28,7 +28,7 @@
 
         #ui {
             position: absolute;
-            bottom: 240px;
+            top: 100px;
             left: 50%;
             transform:translateX(-50%);
             color: rgb(0, 0, 0);
@@ -58,7 +58,7 @@
 
         canvas{
     position:absolute;
-    top:120px;
+    top:220px;
     left:0;
     width:100vw;
     height: 320px;;
@@ -115,6 +115,10 @@
    color:black;
     font-weight:bold;
 }
+
+#debug {
+            display: none;
+        }
 
 
     
@@ -358,7 +362,7 @@ else if (bikeCounter >= 2) {
 
             else {
                 document.getElementById("aiResult").innerText = "일상 소음";
-                document.body.style.backgroundColor = "#111827";
+                document.body.style.backgroundColor = "white";
                 document.getElementById("warning").innerText = "";
             }
         }
