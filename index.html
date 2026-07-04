@@ -13,82 +13,6 @@
             overflow: hidden;
         }
 
-        #infoScreen {
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #infoBox {
-            width: 80%;
-            max-width: 600px;
-            text-align: center;
-            color: rgb(255, 255, 255);
-        }
-
-        #infoBox h2 {
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-
-        #infoText {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 10px;
-            line-height: 2;
-            font-size: 25px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.979);
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        #infoText h2 {
-            font-size: 40px;
-        }
-
-        #infoText h3 {
-            font-size: 30px;
-            margin-top: 20px;
-        }
-
-        #infoText h4,
-        #infoText h5 {
-            font-size: 30px;
-        }
-
-        #infoBox {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 15px;
-        }
-
-        #infoBox {
-            width: 90%;
-            max-width: 850px;
-        }
-
-        #infoText {
-            max-height: 550px;
-            padding: 25px;
-            font-size: 20px;
-            line-height: 1.2;
-            ;
-        }
-
-        #infoText::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #infoText::-webkit-scrollbar-thumb {
-            background: #ffffff;
-            border-radius: 10px;
-        }
-
-        #startScreen,
-        #infoScreen,
         #mainScreen {
             width: 100vw;
             height: 100vh;
@@ -97,20 +21,6 @@
             align-items: center;
             color: white;
             flex-direction: column;
-        }
-
-        #startScreen {
-            display: flex;
-        }
-
-        button {
-            background-color: #35353549;
-            color: white;
-            border: none;
-            padding: 18px 40px;
-            border-radius: 15px;
-            font-size: 20px;
-            cursor: pointer;
         }
 
         button:hover {
@@ -173,7 +83,7 @@
     border-top:1px solid #dcdcdc;
 
     display:flex;
-    justify-content:space-evenly;
+    justify-content:space-between;
     align-items:center;
 
     border-top:1px solid #333;
@@ -183,26 +93,17 @@
 
 .navItem{
     flex:1;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    color:black;
-    font-size:13px;
-    cursor:pointer;
-    padding-top:12px;
-    padding-bottom:12px;
 }
 
 .navItem img{
-    width:80px;
-    height:80px;
+    width:160px;
+    height:160px;
     margin-bottom:4px;
 }
 
 .navItem span{
-    font-size:16px;
-    margin-top:8px;
+    font-size:32px;
+    margin-top:2px;
 }
 
 .navItem.active{
@@ -210,9 +111,6 @@
     font-weight:bold;
 }
 
-canvas{
-    margin-bottom:90px;
-}
 
     
     </style>
@@ -224,7 +122,6 @@ canvas{
     <div id="level">SOUND: 0</div>
     <div id="aiResult">AI: 대기중</div>
     <div id="warning"></div>
-    <div id="bottomNav">
 
     <div class="navItem">
         <img src="기록-removebg-preview.png">
@@ -250,6 +147,10 @@ canvas{
         <img src="내_정보-removebg-preview.png">
         <span>정보</span>
     </div>
+
+</div>
+
+<div id="bottomNav">
 
 </div>
 </div>
