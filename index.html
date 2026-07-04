@@ -477,6 +477,9 @@ function log(msg) {
 }
 
 window.onload = () => {
-    enterMain();
+    // 화면을 한 번 터치하거나 클릭하면 바로 enterMain()을 실행함
+    window.addEventListener("click", enterMain, { once: true });
+    window.addEventListener("touchstart", enterMain, { once: true });
 };
+
 </script>
