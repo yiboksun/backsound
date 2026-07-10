@@ -457,7 +457,7 @@ btnGuide.addEventListener("click", () => {
             }
         }
 
-        function aiLoop() {
+       function aiLoop() {
             if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
                 setTimeout(aiLoop, 250);
                 return;
@@ -471,27 +471,6 @@ btnGuide.addEventListener("click", () => {
                 return;
             }
 
-            if (hornCounter >= 2) {
-    document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
-    document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "위험";
-    triggerAlert();
-    saveDangerLog("자동차 경적"); // [추가] 데이터 저장하기
-} else if (bikeCounter >= 2) {
-    document.getElementById("aiResult").innerText = "오토바이 소리 감지"; 
-    document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "위험";
-    triggerAlert();
-    saveDangerLog("오토바이 주행"); // [추가] 데이터 저장하기
-}
-if (avg > 80) {
-    document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "위험";
-    document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
-    triggerAlert();
-    saveDangerLog("데시벨 초과 큰 소리"); // [추가] 데이터 저장하기
-}
-
             aiRunning = true;
 
             let currentVolume = 0;
@@ -503,7 +482,6 @@ if (avg > 80) {
 
             if (currentVolume < 45) { 
                 document.getElementById("aiResult").innerText = "일상 소음";
-                // 가이드 화면이 아닐 때만 배경색을 변경하도록 제어
                 if (mainScreen.style.display !== "none") {
                     document.body.style.backgroundColor = "white";
                 }
@@ -547,16 +525,19 @@ if (avg > 80) {
                         bikeCounter = 0;
                     }
 
+                    // [올바른 위치] AI 분석이 끝난 후 카운트를 체크하여 데이터를 저장합니다.
                     if (hornCounter >= 2) {
                         document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
                         document.body.style.backgroundColor = "red";
                         document.getElementById("warning").innerText = "위험";
                         triggerAlert();
+                        saveDangerLog("자동차 경적"); 
                     } else if (bikeCounter >= 2) {
                         document.getElementById("aiResult").innerText = "오토바이 소리 감지"; 
                         document.body.style.backgroundColor = "red";
                         document.getElementById("warning").innerText = "위험";
                         triggerAlert();
+                        saveDangerLog("오토바이 주행"); 
                     } else {
                         let sum = 0;
                         for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
@@ -617,11 +598,13 @@ if (avg > 80) {
 
             document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
 
+            // [올바른 위치] 데시벨 초과 감지 및 기록 저장 처리
             if (avg > 80) {
                 document.body.style.backgroundColor = "red";
                 document.getElementById("warning").innerText = "위험";
                 document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
                 triggerAlert();
+                saveDangerLog("데시벨 초과 큰 소리"); 
             } else {
                 if (hornCounter < 2 && bikeCounter < 2) {
                     if (mainScreen.style.display !== "none") {
