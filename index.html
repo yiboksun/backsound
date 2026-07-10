@@ -6,15 +6,16 @@
     <title>Back Sound</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=800&display=swap" rel="stylesheet">
 
     <style>
         body {
             margin: 0;
-    background-color:white !important;
-    color:black;
-            font-family: Arial;
+            background-color: white; /* !important 제거: JS로 배경 변경 가능하도록 */
+            color: black;
+            font-family: Arial, sans-serif;
             overflow: hidden;
+            transition: background-color 0.2s ease; /* 부드러운 배경색 전환 */
         }
 
         #topNav {
@@ -42,7 +43,7 @@
 
         #mainScreen {
             width: 100vw;
-           height: calc(100vh - 120px - 220px);
+            height: calc(100vh - 120px - 220px);
             position: absolute;
             top: 120px;
             left: 0;
@@ -58,54 +59,40 @@
             height: 250px; 
         }
 
-       #ui {
+        #ui {
             margin-top: 20px;
             color: rgb(0, 0, 0);
             text-align: center;
             z-index: 10;
         }
 
-        #level {
+        #level, #warning, #aiResult {
             font-size: 28px;
             font-weight: bold;
+            margin-top: 5px;
         }
 
         #warning {
-            margin-top: 5px;
-            font-size: 28px;
             color: rgb(255, 0, 0);
-            font-weight: bold;
         }
 
-        #aiResult {
-            margin-top: 5px;
-            font-size: 28px;
-            color: rgb(0, 0, 0);
+        #startGuide {
+            position: fixed;
+            top: 120px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 120px - 220px); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
             font-weight: bold;
+            color: black;
+            background-color: white; 
+            z-index: 50; 
+            text-align: center;
+            line-height: 1.5;
         }
-
-      #startGuide {
-    position: fixed;
-
-    top: 120px;
-    left: 0;
-    width: 100vw;
-    height: calc(100vh - 120px - 220px); 
-    
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 30px;
-    font-weight: bold;
-    color: black;
-    background-color: white; 
-    
-    
-    z-index: 50; 
-    
-    text-align: center;
-    line-height: 1.5;
-}
 
         #bottomNav {
             position: fixed;
@@ -121,14 +108,7 @@
             z-index: 100;
         }
 
-        #mainScreen{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-direction:column;
-}
-
-.navItem {
+        .navItem {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -157,9 +137,6 @@
         #debug {
             display: none;
         }
-
-
-    
     </style>
 </head>
 
@@ -170,359 +147,306 @@
 
     <div id="startGuide">화면을 터치하면<br>소리 감지가 시작됩니다</div>
 
-   <div id="mainScreen" style="display:flex;"> <canvas id="wave"></canvas>
-       <div id="ui">
-    <div id="level">SOUND: 0</div>
-    <div id="aiResult">AI: 대기중</div>
-    <div id="warning"></div>
+    <div id="mainScreen"> 
+        <canvas id="wave"></canvas>
+        <div id="ui">
+            <div id="level">SOUND: 0</div>
+            <div id="aiResult">AI: 대기중</div>
+            <div id="warning"></div>
+        </div>
 
-</div>
-
-<div id="bottomNav">
-     <div class="navItem">
-        <img src="기록-removebg-preview.png">
-        <span>기록</span>
+        <div id="bottomNav">
+            <div class="navItem">
+                <img src="기록-removebg-preview.png">
+                <span>기록</span>
+            </div>
+            <div class="navItem">
+                <img src="가이드-removebg-preview.png">
+                <span>가이드</span>
+            </div>
+            <div class="navItem active">
+                <img src="홈-removebg-preview.png">
+                <span>홈</span>
+            </div>
+            <div class="navItem">
+                <img src="지도-removebg-preview.png">
+                <span>지도</span>
+            </div>
+            <div class="navItem">
+                <img src="내_정보-removebg-preview.png">
+                <span>정보</span>
+            </div>
+        </div>
     </div>
 
-    <div class="navItem">
-        <img src="가이드-removebg-preview.png">
-        <span>가이드</span>
-    </div>
-
-    <div class="navItem active">
-        <img src="홈-removebg-preview.png">
-        <span>홈</span>
-    </div>
-
-    <div class="navItem">
-        <img src="지도-removebg-preview.png">
-        <span>지도</span>
-    </div>
-
-    <div class="navItem">
-        <img src="내_정보-removebg-preview.png">
-        <span>정보</span>
-    </div>
-
-</div>
-
-</div>
-    </div>
-<div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
-<script src="edge-impulse-standalone.js"></script>
-<script src="run-impulse.js"></script>
-
-<script>
-let audioContext;
-let analyser;
-let dataArray;
-let micStream;
-
-let aiRunning = false;
-
-let canvas;
-let ctx;
-
-let audioBuffer = [];
-
-let isRunning = false;
-let hornCounter = 0;
-let bikeCounter = 0;
-
-const SAMPLE_WINDOW = 48000;
-
-window.classifier = null;
-window.isAIReady = false;
-
-async function enterMain() {
-    try {
-        document.getElementById("startGuide").style.display = "none";
-
-        log("시작 중...");
-
-        window.classifier = new EdgeImpulseClassifier();
-
-        window.classifier.init()
-        .then(() => {
-            window.isAIReady = true;
-
-            console.log(
-                "Project:",
-                window.classifier.getProjectInfo()
-            );
-
-            console.log(
-                "Properties:",
-                window.classifier.getProperties()
-            );
-
-            document.getElementById("debug").innerText =
-            JSON.stringify(window.classifier.getProperties(), null, 2);
-
-            const props = window.classifier.getProperties();
-            console.log("props =", props);
-
-            for (const key in props) {
-                console.log(key, props[key]);
-            }
-
-            log("AI 준비 완료");
-        })
-        .catch(err => {
-            log("AI 실패: " + err.message);
-        });
-
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        await audioContext.resume();
-
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-
-        const mic = audioContext.createMediaStreamSource(micStream);
-        mic.connect(analyser);
-
-        const processor = audioContext.createScriptProcessor(4096, 1, 1);
-        mic.connect(processor);
-        processor.connect(audioContext.destination);
-
-        processor.onaudioprocess = function(e) {
-            const input = e.inputBuffer.getChannelData(0);
-
-            for (let i = 0; i < input.length; i++) {
-        
-                let s = Math.max(-1, Math.min(1, input[i]));
-                audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
-            }
-
-            
-            if (audioBuffer.length > SAMPLE_WINDOW * 2) {
-                audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
-            }
-        };
-
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-       
-        canvas = document.getElementById("wave");
-        ctx = canvas.getContext("2d");
-        resizeCanvas();
-
-        isRunning = true;
-
-        drawLoop();
-        aiLoop();
-
-        log("실행 완료");
-
-    } catch (e) {
-        log("에러: " + e.message);
-    }
-}
-
-function aiLoop() {
-    if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
-        setTimeout(aiLoop, 250);
-        return;
-    }
-
-    if (audioBuffer.length < SAMPLE_WINDOW) {
-        document.getElementById("aiResult").innerText = "버퍼 수집중...";
-        setTimeout(aiLoop, 250);
-        return;
-    }
-
-    aiRunning = true;
-
-    let currentVolume = 0;
-    if (dataArray) {
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-        currentVolume = sum / dataArray.length;
-    }
-
-    if (currentVolume < 45) { 
-        document.getElementById("aiResult").innerText = "일상 소음";
-        document.body.style.backgroundColor = "white";
-        document.getElementById("warning").innerText = "";
-        
-        hornCounter = 0;
-        bikeCounter = 0;
-
-        aiRunning = false;
-        setTimeout(aiLoop, 250);
-        return;
-    }
-
-    const inputSlice = audioBuffer.slice(-SAMPLE_WINDOW);
-    const input = new Float32Array(inputSlice);
-
-    try {
-        const result = window.classifier.classify(input);
-
-        if (result?.results) {
-            let hornScore = 0;
-            let bikeScore = 0;
-
-            result.results.forEach(r => {
-                if (r.label.includes("경적") || r.label.toLowerCase().includes("horn")) {
-                    hornScore = r.value;
-                }
-                if (r.label.includes("오토바이") || r.label.toLowerCase().includes("bike") || r.label.toLowerCase().includes("motor")) {
-                    bikeScore = r.value;
-                }
-            });
-
-            if (hornScore >= 0.8) {
-                hornCounter++;
-                bikeCounter = 0;
-            } 
-           
-            else if (bikeScore >= 0.8) {
-                bikeCounter++;
-                hornCounter = 0;
-            } 
-           
-            else {
-                hornCounter = 0;
-                bikeCounter = 0;
-            }
-
-if (hornCounter >= 2) {
-    document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
-    document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "위험";
+    <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
     
-    playBeep(); 
-    if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
-} 
-else if (bikeCounter >= 2) {
-    document.getElementById("aiResult").innerText = "오토바이 소리 감지"; 
-    document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "위험";
-    
-    playBeep(); 
-    if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
-}
+    <script src="edge-impulse-standalone.js"></script>
+    <script src="run-impulse.js"></script>
 
-            else {
+    <script>
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let micStream;
+
+        let aiRunning = false;
+        let canvas;
+        let ctx;
+        let audioBuffer = [];
+        let isRunning = false;
+        
+        let hornCounter = 0;
+        let bikeCounter = 0;
+        let isBeepCooldown = false; // 비프음 과호출 방지용 변수
+
+        const SAMPLE_WINDOW = 48000;
+
+        window.classifier = null;
+        window.isAIReady = false;
+
+        async function enterMain() {
+            try {
+                document.getElementById("startGuide").style.display = "none";
+                log("시작 중...");
+
+                window.classifier = new EdgeImpulseClassifier();
+                window.classifier.init()
+                .then(() => {
+                    window.isAIReady = true;
+                    log("AI 준비 완료");
+                })
+                .catch(err => {
+                    log("AI 실패: " + err.message);
+                });
+
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.resume();
+
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+
+                const mic = audioContext.createMediaStreamSource(micStream);
+                mic.connect(analyser);
+
+                const processor = audioContext.createScriptProcessor(4096, 1, 1);
+                mic.connect(processor);
+                processor.connect(audioContext.destination);
+
+                processor.onaudioprocess = function(e) {
+                    const input = e.inputBuffer.getChannelData(0);
+                    for (let i = 0; i < input.length; i++) {
+                        let s = Math.max(-1, Math.min(1, input[i]));
+                        audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
+                    }
+                    if (audioBuffer.length > SAMPLE_WINDOW * 2) {
+                        audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
+                    }
+                };
+
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                canvas = document.getElementById("wave");
+                ctx = canvas.getContext("2d");
+                resizeCanvas();
+
+                isRunning = true;
+                drawLoop();
+                aiLoop();
+                log("실행 완료");
+
+            } catch (e) {
+                log("에러: " + e.message);
+            }
+        }
+
+        function aiLoop() {
+            if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
+                setTimeout(aiLoop, 250);
+                return;
+            }
+
+            if (audioBuffer.length < SAMPLE_WINDOW) {
+                document.getElementById("aiResult").innerText = "버퍼 수집중...";
+                setTimeout(aiLoop, 250);
+                return;
+            }
+
+            aiRunning = true;
+
+            let currentVolume = 0;
+            if (dataArray) {
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                currentVolume = sum / dataArray.length;
+            }
+
+            // 데시벨 볼륨이 너무 낮으면 AI 연산 건너뛰고 초기화
+            if (currentVolume < 45) { 
                 document.getElementById("aiResult").innerText = "일상 소음";
                 document.body.style.backgroundColor = "white";
                 document.getElementById("warning").innerText = "";
+                
+                hornCounter = 0;
+                bikeCounter = 0;
+
+                aiRunning = false;
+                setTimeout(aiLoop, 250);
+                return;
+            }
+
+            const inputSlice = audioBuffer.slice(-SAMPLE_WINDOW);
+            const input = new Float32Array(inputSlice);
+
+            try {
+                const result = window.classifier.classify(input);
+
+                if (result?.results) {
+                    let hornScore = 0;
+                    let bikeScore = 0;
+
+                    result.results.forEach(r => {
+                        if (r.label.includes("경적") || r.label.toLowerCase().includes("horn")) {
+                            hornScore = r.value;
+                        }
+                        if (r.label.includes("오토바이") || r.label.toLowerCase().includes("bike") || r.label.toLowerCase().includes("motor")) {
+                            bikeScore = r.value;
+                        }
+                    });
+
+                    if (hornScore >= 0.8) {
+                        hornCounter++;
+                        bikeCounter = 0;
+                    } else if (bikeScore >= 0.8) {
+                        bikeCounter++;
+                        hornCounter = 0;
+                    } else {
+                        hornCounter = 0;
+                        bikeCounter = 0;
+                    }
+
+                    if (hornCounter >= 2) {
+                        document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
+                        document.body.style.backgroundColor = "red";
+                        document.getElementById("warning").innerText = "위험";
+                        
+                        triggerAlert();
+                    } else if (bikeCounter >= 2) {
+                        document.getElementById("aiResult").innerText = "오토바이 소리 감지"; 
+                        document.body.style.backgroundColor = "red";
+                        document.getElementById("warning").innerText = "위험";
+                        
+                        triggerAlert();
+                    } else {
+                        // 경적이나 오토바이가 연속 감지되지 않았을 때 (단, 실시간 drawLoop에서 큰 소리 감지중이 아닐 때만 흰색으로 복구)
+                        let sum = 0;
+                        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                        if ((sum / dataArray.length) <= 80) {
+                            document.getElementById("aiResult").innerText = "일상 소음";
+                            document.body.style.backgroundColor = "white";
+                            document.getElementById("warning").innerText = "";
+                        }
+                    }
+                }
+            } catch(err) {
+                console.error("AI error:", err);
+            }
+
+            aiRunning = false;
+            setTimeout(aiLoop, 250);
+        }
+
+        // 알림 이펙트 묶음 함수 (과호출 제어 포함)
+        function triggerAlert() {
+            if (!isBeepCooldown) {
+                playBeep();
+                if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+                isBeepCooldown = true;
+                setTimeout(() => { isBeepCooldown = false; }, 1000); // 1초 쿨타임
             }
         }
-    }
-    catch(err) {
-        console.error("AI error:", err);
-    }
 
-    aiRunning = false;
-    setTimeout(aiLoop, 250);
-}
+        function playBeep() {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
 
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
 
-function playBeep() {
+            oscillator.frequency.value = 1000;
+            oscillator.type = "sine";
 
-    const oscillator =
-        audioContext.createOscillator();
-
-    const gainNode =
-        audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.frequency.value = 1000;
-    oscillator.type = "sine";
-
-    gainNode.gain.setValueAtTime(
-        0.2,
-        audioContext.currentTime
-    );
-
-    oscillator.start();
-
-    oscillator.stop(
-        audioContext.currentTime + 0.2
-    );
-}
-
-function drawLoop() {
-
-    requestAnimationFrame(drawLoop);
-
-    if (!isRunning) return;
-    if (!analyser || !dataArray || !ctx) return;
-
-    analyser.getByteFrequencyData(dataArray);
-
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i];
-    }
-
-    const avg = sum / dataArray.length;
-
-    document.getElementById("level").innerText =
-    "SOUND: " + Math.round(avg);
-
-    if (avg > 80) {
-    document.body.style.backgroundColor = "red";
-    document.getElementById("warning").innerText = "위험";
-    document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
-
-    playBeep();
-    if (navigator.vibrate) navigator.vibrate(200);
-
-} else {
-   
-    if (hornCounter < 2 && bikeCounter < 2) {
-        document.body.style.backgroundColor = "#111827";
-        document.getElementById("warning").innerText = "";
-        if (avg >= 45) {
-            document.getElementById("aiResult").innerText = "일상 소음";
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
         }
-    }
-}
 
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function drawLoop() {
+            requestAnimationFrame(drawLoop);
 
-    let x = 0;
-    const barWidth = (canvas.width / dataArray.length) * 1.5;
+            if (!isRunning || !analyser || !dataArray || !ctx) return;
 
-    for (let i = 0; i < dataArray.length; i++) {
-        const barHeight = dataArray[i] * 1.7;
-        const y = (canvas.height - barHeight) / 2;
+            analyser.getByteFrequencyData(dataArray);
 
-        ctx.fillStyle = "black";
-        ctx.fillRect(x, y, barWidth, barHeight);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const avg = sum / dataArray.length;
 
-        x += barWidth + 3;
-    }
-}
+            document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
 
-function resizeCanvas() {
-    if (!canvas) return;
-    canvas.width = window.innerWidth;
-    canvas.height = 300;
-}
+            // 즉각적인 큰 소리 반응 처리
+            if (avg > 80) {
+                document.body.style.backgroundColor = "red";
+                document.getElementById("warning").innerText = "위험";
+                document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
+                triggerAlert();
+            } else {
+                // AI 조건도 만족하지 않고, 단순 데시벨도 낮다면 흰색 바탕 유지 (기존 #111827 삭제로 깜빡임 방지)
+                if (hornCounter < 2 && bikeCounter < 2) {
+                    document.body.style.backgroundColor = "white";
+                    document.getElementById("warning").innerText = "";
+                    if (avg >= 45) {
+                        document.getElementById("aiResult").innerText = "일상 소음";
+                    }
+                }
+            }
 
-window.addEventListener("resize", resizeCanvas);
+            // 캔버스 이퀄라이저 그리기
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let x = 0;
+            const barWidth = (canvas.width / dataArray.length) * 1.5;
 
-function log(msg) {
-    document.getElementById("debug").innerText =
-        typeof msg === "object"
-            ? JSON.stringify(msg, null, 2)
-            : msg;
-}
+            for (let i = 0; i < dataArray.length; i++) {
+                const barHeight = dataArray[i] * 1.7;
+                const y = (canvas.height - barHeight) / 2;
 
-window.onload = () => {
-    document.getElementById("aiResult").innerText = "화면을 터치하면 시작합니다";
-    
-    window.addEventListener("click", enterMain, { once: true });
-    window.addEventListener("touchstart", enterMain, { once: true });
-};
+                ctx.fillStyle = "black";
+                ctx.fillRect(x, y, barWidth, barHeight);
+                x += barWidth + 3;
+            }
+        }
 
-</script>
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = 300;
+        }
+
+        window.addEventListener("resize", resizeCanvas);
+
+        function log(msg) {
+            document.getElementById("debug").innerText =
+                typeof msg === "object" ? JSON.stringify(msg, null, 2) : msg;
+        }
+
+        window.onload = () => {
+            document.getElementById("aiResult").innerText = "화면을 터치하면 시작합니다";
+            window.addEventListener("click", enterMain, { once: true });
+            window.addEventListener("touchstart", enterMain, { once: true });
+        };
+    </script>
+</body>
+</html>
