@@ -1031,93 +1031,111 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --- 통계 및 로그 관리 기능 ---
         let lastSavedTime = 0;
-        function saveDangerLog(type) {
-            const now = new Date();
-            if (now.getTime() - lastSavedTime < 2000) return;
-            lastSavedTime = now.getTime();
+function saveDangerLog(type) {
+    const now = new Date();
+    if (now.getTime() - lastSavedTime < 2000) return;
+    lastSavedTime = now.getTime();
 
-            const logEntry = {
-                date: now.toISOString().split('T')[0], 
-                time: now.toTimeString().split(' ')[0].substring(0, 5), 
-                hour: now.getHours(),
-                type: type
-            };
+    // 🌟 한국 시간(로컬) 기준 YYYY-MM-DD 날짜 포맷 생성
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    const logEntry = {
+        date: todayStr, 
+        time: now.toTimeString().split(' ')[0].substring(0, 5), 
+        hour: now.getHours(),
+        type: type
+    };
 
-            let currentLogs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
-            currentLogs.push(logEntry);
-            localStorage.setItem("backsound_logs", JSON.stringify(currentLogs));
-        }
+    let currentLogs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
+    currentLogs.push(logEntry);
+
+    // 일주일 전 데이터 자동 만료 계산도 한국 시간 기준으로 변경
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    const boundaryDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
+    currentLogs = currentLogs.filter(log => log.date >= boundaryDate);
+    localStorage.setItem("backsound_logs", JSON.stringify(currentLogs));
+}
 
         function updateRecordScreen() {
-            const now = new Date();
-const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const logs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
-            const todayLogs = logs.filter(log => log.date === todayStr);
+    const now = new Date();
+    // 🌟 저장할 때와 똑같은 로컬 날짜 포맷으로 읽어옵니다.
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    const logs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
+    const todayLogs = logs.filter(log => log.date === todayStr);
 
-            const totalCount = todayLogs.length;
-            const hornCount = todayLogs.filter(log => log.type === "자동차 경적").length;
-            const bikeCount = todayLogs.filter(log => log.type === "오토바이 주행").length;
-            const loudCount = todayLogs.filter(log => log.type === "데시벨 초과 큰 소리").length;
+    const totalCount = todayLogs.length;
+    const hornCount = todayLogs.filter(log => log.type === "자동차 경적").length;
+    const bikeCount = todayLogs.filter(log => log.type === "오토바이 주행").length;
+    const loudCount = todayLogs.filter(log => log.type === "데시벨 초과 큰 소리").length;
 
-            const totalEl = document.getElementById("statTotal");
-            const detailsEl = document.getElementById("statDetails");
-            if (totalEl) totalEl.innerText = `오늘 감지된 위험: 총 ${totalCount}회`;
-            if (detailsEl) detailsEl.innerText = ` 경적: ${hornCount}회 |  오토바이: ${bikeCount}회 |  큰소리: ${loudCount}회`;
+    const totalEl = document.getElementById("statTotal");
+    const detailsEl = document.getElementById("statDetails");
+    if (totalEl) totalEl.innerText = `오늘 감지된 위험: 총 ${totalCount}회`;
+    if (detailsEl) detailsEl.innerText = ` 경적: ${hornCount}회 |  오토바이: ${bikeCount}회 |  큰소리: ${loudCount}회`;
 
-            const timelineLog = document.getElementById("timelineLog");
-            if (timelineLog) {
-                timelineLog.innerHTML = "";
-                [...todayLogs].reverse().slice(0, 50).forEach(log => {
-                    const li = document.createElement("li");
-                    li.className = "timeline-item";
-                    li.innerHTML = `
-                        <span class="timeline-tag">[${log.type}] 위험 감지!</span>
-                        <span class="timeline-time">${log.time}</span>
-                    `;
-                    timelineLog.appendChild(li);
-                });
-            }
+    const timelineLog = document.getElementById("timelineLog");
+    if (timelineLog) {
+        timelineLog.innerHTML = "";
+        // 🌟 요청하신 대로 50개까지 넉넉하게 스크롤해서 볼 수 있도록 수정!
+        [...todayLogs].reverse().slice(0, 50).forEach(log => {
+            const li = document.createElement("li");
+            li.className = "timeline-item";
+            li.innerHTML = `
+                <span class="timeline-tag">[${log.type}] 위험 감지!</span>
+                <span class="timeline-time">${log.time}</span>
+            `;
+            timelineLog.appendChild(li);
+        });
+    }
 
-            const hourlyData = new Array(24).fill(0);
-            todayLogs.forEach(log => {
-                if(log.hour >= 0 && log.hour < 24) {
-                    hourlyData[log.hour]++;
-                }
-            });
-
-            const chartEl = document.getElementById('dangerChart');
-            if (chartEl) {
-                const ctxChart = chartEl.getContext('2d');
-                if (dangerChartInstance) {
-                    dangerChartInstance.destroy();
-                }
-
-                dangerChartInstance = new Chart(ctxChart, {
-                    type: 'line',
-                    data: {
-                        labels: Array.from({length: 24}, (_, i) => `${i}시`),
-                        datasets: [{
-                            label: '시간대별 위험 감지 횟수',
-                            data: hourlyData,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            pointBackgroundColor: '#ef4444'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 14 } } },
-                            x: { ticks: { font: { size: 12 }, maxTicksLimit: 8 } }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
+    const hourlyData = new Array(24).fill(0);
+    todayLogs.forEach(log => {
+        if(log.hour >= 0 && log.hour < 24) {
+            hourlyData[log.hour]++;
         }
+    });
+
+    const chartEl = document.getElementById('dangerChart');
+    if (chartEl) {
+        const ctxChart = chartEl.getContext('2d');
+        if (dangerChartInstance) {
+            dangerChartInstance.destroy();
+        }
+
+        dangerChartInstance = new Chart(ctxChart, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 24}, (_, i) => `${i}시`),
+                datasets: [{
+                    label: '시간대별 위험 감지 횟수',
+                    data: hourlyData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    pointBackgroundColor: '#ef4444'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        // 🌟 stepSize: 1을 과감히 제거했습니다! 
+                        // 이제 300회든 500회든 차트가 알아서 최적의 눈금(예: 50, 100, 150...)을 그려 윗 칸을 만들어 줍니다.
+                        ticks: { font: { size: 14 } } 
+                    },
+                    x: { ticks: { font: { size: 12 }, maxTicksLimit: 8 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+}
 
         // --- 지도 인스턴스 핸들링 ---
         let mapInstance = null;
