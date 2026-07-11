@@ -418,94 +418,81 @@
         window.classifier = null;
         window.isAIReady = false;
 
-        // --- 탭 전환 로직 코드 추가 ---
+        // --- 설정 값 변수 선언 (기본값 80) ---
+        let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
+        let hasWarnedSensitivity = false; 
+
+        // --- 탭 전환 및 화면 요소 가져오기 ---
         const btnHome = document.getElementById("btnHome");
         const btnGuide = document.getElementById("btnGuide");
+        const btnRecord = document.getElementById("btnRecord");
+        const btnMap = document.getElementById("btnMap");
+        const btnInfo = document.getElementById("btnInfo");
+
         const mainScreen = document.getElementById("mainScreen");
         const guideScreen = document.getElementById("guideScreen");
-        const btnInfo = document.getElementById("btnInfo");
+        const recordScreen = document.getElementById("recordScreen");
+        const mapScreen = document.getElementById("mapScreen");
         const infoScreen = document.getElementById("infoScreen");
 
+        let dangerChartInstance = null; 
+
         // 모든 화면 숨기기 및 네비게이션 활성화 초기화 함수
-function hideAllScreens() {
-    mainScreen.style.display = "none";
-    guideScreen.style.display = "none";
-    recordScreen.style.display = "none";
-    mapScreen.style.display = "none";
-    infoScreen.style.display = "none"; // 추가
-    
-    btnHome.classList.remove("active");
-    btnGuide.classList.remove("active");
-    btnRecord.classList.remove("active");
-    btnMap.classList.remove("active");
-    btnInfo.classList.remove("active"); // 추가
-    
-    document.body.style.backgroundColor = "white";
-}
+        function hideAllScreens() {
+            mainScreen.style.display = "none";
+            guideScreen.style.display = "none";
+            recordScreen.style.display = "none";
+            mapScreen.style.display = "none";
+            if (infoScreen) infoScreen.style.display = "none";
+            
+            btnHome.classList.remove("active");
+            btnGuide.classList.remove("active");
+            btnRecord.classList.remove("active");
+            btnMap.classList.remove("active");
+            if (btnInfo) btnInfo.classList.remove("active");
+            
+            document.body.style.backgroundColor = "white";
+        }
 
-        // 홈 버튼 클릭 시
+        // --- 깔끔하게 통합된 내비게이션 이벤트 리스너 ---
         btnHome.addEventListener("click", () => {
+            hideAllScreens();
             mainScreen.style.display = "flex";
-            guideScreen.style.display = "none";
-            
             btnHome.classList.add("active");
-            btnGuide.classList.remove("active");
         });
 
-        // 가이드 버튼 클릭 시
         btnGuide.addEventListener("click", () => {
-            mainScreen.style.display = "none";
+            hideAllScreens();
             guideScreen.style.display = "block";
-            
             btnGuide.classList.add("active");
-            btnHome.classList.remove("active");
-            
-            // 가이드 화면으로 전환될 때는 위험 배경색 초기화
-            document.body.style.backgroundColor = "white";
         });
-        // ------------------------------
 
-        // [기존 코드 아래에 추가] 탭 전환 요소 가져오기
-        const btnRecord = document.getElementById("btnRecord");
-        const recordScreen = document.getElementById("recordScreen");
-        let dangerChartInstance = null; // 그래프 객체를 담을 변수
-
-        // 기록 버튼 클릭 시 화면 전환
         btnRecord.addEventListener("click", () => {
-            mainScreen.style.display = "none";
-            guideScreen.style.display = "none";
+            hideAllScreens();
             recordScreen.style.display = "block";
-            
             btnRecord.classList.add("active");
-            btnHome.classList.remove("active");
-            btnGuide.classList.remove("active");
-            
-            document.body.style.backgroundColor = "white";
-            
-            // 기록 화면이 켜질 때 최신 데이터를 읽어와서 그래프와 로그를 새로 그립니다.
             updateRecordScreen();
         });
 
-        // [기존 홈/가이드 클릭 이벤트 내부에도 recordScreen을 숨기는 코드 추가 필요]
-        btnHome.addEventListener("click", () => {
-            mainScreen.style.display = "flex";
-            guideScreen.style.display = "none";
-            recordScreen.style.display = "none"; // 추가
-            btnHome.classList.add("active");
-            btnGuide.classList.remove("active");
-            btnRecord.classList.remove("active"); // 추가
+        btnMap.addEventListener("click", () => {
+            hideAllScreens();
+            mapScreen.style.display = "block";
+            btnMap.classList.add("active");
+            if (!isMapInitialized) {
+                initMapSystem();
+                isMapInitialized = true;
+            }
         });
 
-        btnGuide.addEventListener("click", () => {
-            mainScreen.style.display = "none";
-            guideScreen.style.display = "block";
-            recordScreen.style.display = "none"; // 추가
-            btnGuide.classList.add("active");
-            btnHome.classList.remove("active");
-            btnRecord.classList.remove("active"); // 추가
-            document.body.style.backgroundColor = "white";
-        });
+        if (btnInfo && infoScreen) {
+            btnInfo.addEventListener("click", () => {
+                hideAllScreens();
+                infoScreen.style.display = "block"; // 👈 style.style 에러 수정 완료
+                btnInfo.classList.add("active");
+            });
+        }
 
+        // --- 오디오 및 AI 핵심 로직 ---
         async function enterMain() {
             try {
                 document.getElementById("startGuide").style.display = "none";
@@ -629,7 +616,6 @@ function hideAllScreens() {
                         bikeCounter = 0;
                     }
 
-                    // [올바른 위치] AI 분석이 끝난 후 카운트를 체크하여 데이터를 저장합니다.
                     if (hornCounter >= 2) {
                         document.getElementById("aiResult").innerText = "자동차 경적 소리 감지"; 
                         document.body.style.backgroundColor = "red";
@@ -645,7 +631,7 @@ function hideAllScreens() {
                     } else {
                         let sum = 0;
                         for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-                        if ((sum / dataArray.length) <= 80) {
+                        if ((sum / dataArray.length) <= DANGER_THRESHOLD) { // 👈 여기도 유연하게 연동 가능
                             document.getElementById("aiResult").innerText = "일상 소음";
                             if (mainScreen.style.display !== "none") {
                                 document.body.style.backgroundColor = "white";
@@ -702,7 +688,7 @@ function hideAllScreens() {
 
             document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
 
-            // [올바른 위치] 데시벨 초과 감지 및 기록 저장 처리
+            // [데시벨 설정 값 조건문 반영 완료]
             if (avg > DANGER_THRESHOLD) {
                 document.body.style.backgroundColor = "red";
                 document.getElementById("warning").innerText = "위험";
@@ -748,58 +734,55 @@ function hideAllScreens() {
                 typeof msg === "object" ? JSON.stringify(msg, null, 2) : msg;
         }
 
+        // --- DOM 로드 시 초기 가동 및 슬라이더 밸류 바인딩 ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const slider = document.getElementById("sensitivitySlider");
+            const sliderLabel = document.getElementById("sliderValue");
+            const btnClearData = document.getElementById("btnClearData");
+
+            if (slider && sliderLabel) {
+                // 저장되어 있던 값이 있다면 슬라이더 위치 맞추기
+                slider.value = DANGER_THRESHOLD;
+                sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
+
+                // 슬라이더 조절 이벤트
+                slider.addEventListener("input", (e) => {
+                    const value = parseInt(e.target.value);
+                    DANGER_THRESHOLD = value;
+                    sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
+                    
+                    localStorage.setItem("sound_threshold", value);
+
+                    // 90dB 이상으로 너무 둔감하게 설정했을 때 최초 경고 팝업 호출
+                    if (value >= 90) {
+                        if (!hasWarnedSensitivity) {
+                            alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!\n이 상태에서는 아주 큰 소리가 아니면 위험 상황을 감지하지 못할 수 있습니다.");
+                            hasWarnedSensitivity = true; 
+                        }
+                    } else {
+                        hasWarnedSensitivity = false;
+                    }
+                });
+            }
+
+            if (btnClearData) {
+                btnClearData.addEventListener("click", () => {
+                    if (confirm("정말로 오늘의 위험 감지 기록 데이터를 모두 삭제하시겠습니까?")) {
+                        localStorage.removeItem("backsound_logs");
+                        alert("데이터가 초기화되었습니다.");
+                        updateRecordScreen();
+                    }
+                });
+            }
+        });
+
         window.onload = () => {
             document.getElementById("aiResult").innerText = "화면을 터치하면 시작합니다";
             window.addEventListener("click", enterMain, { once: true });
             window.addEventListener("touchstart", enterMain, { once: true });
         };
 
-        // --- 설정 값 변수 선언 (기본값 80) ---
-let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
-let hasWarnedSensitivity = false; // 경고창이 한 번만 뜨도록 체크하는 변수
-
-// 스크립트 로드 시 슬라이더 초기 설정 초기화
-document.addEventListener("DOMContentLoaded", () => {
-    const slider = document.getElementById("sensitivitySlider");
-    const sliderLabel = document.getElementById("sliderValue");
-    const btnClearData = document.getElementById("btnClearData");
-
-    // 저장되어 있던 값이 있다면 슬라이더 위치 맞추기
-    slider.value = DANGER_THRESHOLD;
-    sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
-
-    // 슬라이더 조절 이벤트
-    slider.addEventListener("input", (e) => {
-        const value = parseInt(e.target.value);
-        DANGER_THRESHOLD = value;
-        sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
-        
-        // 기기에 설정값 즉시 저장 (로그인 없어도 유지됨)
-        localStorage.setItem("sound_threshold", value);
-
-        // [요청 기능] 기준을 90dB 이상으로 올려서 너무 둔감하게 만들었을 때 경고창 발생
-        if (value >= 90) {
-            if (!hasWarnedSensitivity) {
-                alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!\n이 상태에서는 아주 큰 소리가 아니면 위험 상황을 감지하지 못할 수 있습니다.");
-                hasWarnedSensitivity = true; // 한 번 떴으므로 차단
-            }
-        } else {
-            // 다시 민감도를 높이면 경고 초기화
-            hasWarnedSensitivity = false;
-        }
-    });
-
-    // 데이터 초기화 버튼 기능
-    btnClearData.addEventListener("click", () => {
-        if (confirm("정말로 오늘의 위험 감지 기록 데이터를 모두 삭제하시겠습니까?")) {
-            localStorage.removeItem("backsound_logs");
-            alert("데이터가 초기화되었습니다.");
-            if(typeof updateRecordScreen === "function") updateRecordScreen();
-        }
-    });
-});
-
-        // 위험 데이터를 LocalStorage에 저장하는 함수 (중복 저장 방지용 시간 체크 포함)
+        // --- 통계 및 로그 관리 기능 ---
         let lastSavedTime = 0;
         function saveDangerLog(type) {
             const now = new Date();
@@ -807,8 +790,8 @@ document.addEventListener("DOMContentLoaded", () => {
             lastSavedTime = now.getTime();
 
             const logEntry = {
-                date: now.toISOString().split('T')[0], // YYYY-MM-DD
-                time: now.toTimeString().split(' ')[0].substring(0, 5), // HH:MM
+                date: now.toISOString().split('T')[0], 
+                time: now.toTimeString().split(' ')[0].substring(0, 5), 
                 hour: now.getHours(),
                 type: type
             };
@@ -818,7 +801,6 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("backsound_logs", JSON.stringify(currentLogs));
         }
 
-        // 기록 화면 UI 전체 업데이트 (통계 카드 + 그래프 + 타임라인)
         function updateRecordScreen() {
             const todayStr = new Date().toISOString().split('T')[0];
             const logs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
@@ -829,21 +811,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const bikeCount = todayLogs.filter(log => log.type === "오토바이 주행").length;
             const loudCount = todayLogs.filter(log => log.type === "데시벨 초과 큰 소리").length;
 
-            document.getElementById("statTotal").innerText = `오늘 감지된 위험: 총 ${totalCount}회`;
-            document.getElementById("statDetails").innerText = ` 경적: ${hornCount}회 |  오토바이: ${bikeCount}회 |  큰소리: ${loudCount}회`;
+            const totalEl = document.getElementById("statTotal");
+            const detailsEl = document.getElementById("statDetails");
+            if (totalEl) totalEl.innerText = `오늘 감지된 위험: 총 ${totalCount}회`;
+            if (detailsEl) detailsEl.innerText = ` 경적: ${hornCount}회 |  오토바이: ${bikeCount}회 |  큰소리: ${loudCount}회`;
 
             const timelineLog = document.getElementById("timelineLog");
-            timelineLog.innerHTML = "";
-            
-            [...todayLogs].reverse().slice(0, 20).forEach(log => {
-                const li = document.createElement("li");
-                li.className = "timeline-item";
-                li.innerHTML = `
-                    <span class="timeline-tag">[${log.type}] 위험 감지!</span>
-                    <span class="timeline-time">${log.time}</span>
-                `;
-                timelineLog.appendChild(li);
-            });
+            if (timelineLog) {
+                timelineLog.innerHTML = "";
+                [...todayLogs].reverse().slice(0, 20).forEach(log => {
+                    const li = document.createElement("li");
+                    li.className = "timeline-item";
+                    li.innerHTML = `
+                        <span class="timeline-tag">[${log.type}] 위험 감지!</span>
+                        <span class="timeline-time">${log.time}</span>
+                    `;
+                    timelineLog.appendChild(li);
+                });
+            }
 
             const hourlyData = new Array(24).fill(0);
             todayLogs.forEach(log => {
@@ -852,108 +837,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            const ctxChart = document.getElementById('dangerChart').getContext('2d');
-            
-            if (dangerChartInstance) {
-                dangerChartInstance.destroy();
-            }
-
-            dangerChartInstance = new Chart(ctxChart, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 24}, (_, i) => `${i}시`),
-                    datasets: [{
-                        label: '시간대별 위험 감지 횟수',
-                        data: hourlyData,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        pointBackgroundColor: '#ef4444'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1, font: { size: 14 } }
-                        },
-                        x: {
-                            ticks: { font: { size: 12 }, maxTicksLimit: 8 }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
+            const chartEl = document.getElementById('dangerChart');
+            if (chartEl) {
+                const ctxChart = chartEl.getContext('2d');
+                if (dangerChartInstance) {
+                    dangerChartInstance.destroy();
                 }
-            });
+
+                dangerChartInstance = new Chart(ctxChart, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => `${i}시`),
+                        datasets: [{
+                            label: '시간대별 위험 감지 횟수',
+                            data: hourlyData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointBackgroundColor: '#ef4444'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 14 } } },
+                            x: { ticks: { font: { size: 12 }, maxTicksLimit: 8 } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
         }
 
-        // ==========================================
-        // 지도 시스템 로직
-        // ==========================================
-
-        const btnMap = document.getElementById("btnMap");
-        const mapScreen = document.getElementById("mapScreen");
+        // --- 지도 인스턴스 핸들링 ---
         let mapInstance = null;
         let userMarker = null;
         let isMapInitialized = false;
-
         let insideZoneName = null;     
         let allDangerZones = [];       
-
-        btnMap.addEventListener("click", () => {
-            mainScreen.style.display = "none";
-            guideScreen.style.display = "none";
-            recordScreen.style.display = "none";
-            mapScreen.style.display = "block";
-            
-            btnMap.classList.add("active");
-            btnHome.classList.remove("active");
-            btnGuide.classList.remove("active");
-            btnRecord.classList.remove("active");
-            
-            document.body.style.backgroundColor = "white";
-            
-            if (!isMapInitialized) {
-                initMapSystem();
-                isMapInitialized = true;
-            }
-        });
-
-        // 정보(설정) 버튼 클릭 시 화면 전환 (새로 추가)
-btnInfo.addEventListener("click", () => {
-    hideAllScreens();
-    infoScreen.style.style.display = "block";
-    btnInfo.classList.add("active");
-});
-
-        btnHome.addEventListener("click", () => {
-            mapScreen.style.display = "none"; 
-            btnHome.classList.add("active");
-            btnGuide.classList.remove("active");
-            btnRecord.classList.remove("active");
-            btnMap.classList.remove("active");
-        });
-        btnGuide.addEventListener("click", () => {
-            mapScreen.style.display = "none"; 
-            btnGuide.classList.add("active");
-            btnHome.classList.remove("active");
-            btnRecord.classList.remove("active");
-            btnMap.classList.remove("active");
-            document.body.style.backgroundColor = "white";
-        });
-        btnRecord.addEventListener("click", () => {
-            mapScreen.style.display = "none"; 
-            btnRecord.classList.add("active");
-            btnHome.classList.remove("active");
-            btnGuide.classList.remove("active");
-            btnMap.classList.remove("active");
-            document.body.style.backgroundColor = "white";
-            updateRecordScreen();
-        });
 
         function initMapSystem() {
             if (!navigator.geolocation) {
@@ -975,7 +898,7 @@ btnInfo.addEventListener("click", () => {
                     startTracking();
                 })
                 .catch(error => {
-                    console.error("danger_zones.json 파일을 불러오지 못했습니다. 경로와 변환 상태를 확인하세요.", error);
+                    console.error("danger_zones.json 로드 실패.", error);
                 });
         }
 
@@ -1021,7 +944,6 @@ btnInfo.addEventListener("click", () => {
 
                 if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
                     const distance = getDistance(userLat, userLng, zoneLat, zoneLng);
-                    
                     if (distance <= 3000) {
                         L.circle([zoneLat, zoneLng], {
                             color: '#ef4444',
@@ -1045,7 +967,6 @@ btnInfo.addEventListener("click", () => {
 
                 if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
                     const distance = getDistance(userLat, userLng, zoneLat, zoneLng);
-
                     if (distance <= zoneRadius) {
                         currentActiveZone = {
                             name: zoneName,
@@ -1056,14 +977,13 @@ btnInfo.addEventListener("click", () => {
             });
 
             const toast = document.getElementById("zoneToast");
+            if (!toast) return;
 
             if (currentActiveZone) {
                 if (insideZoneName !== currentActiveZone.name) {
                     insideZoneName = currentActiveZone.name;
-                    
                     toast.innerText = currentActiveZone.msg;
                     toast.classList.add("show");
-                    
                     if (navigator.vibrate) navigator.vibrate(100);
                 }
             } else {
@@ -1085,5 +1005,3 @@ btnInfo.addEventListener("click", () => {
             return R * c; 
         }
 </script>
-</body>
-</html>
