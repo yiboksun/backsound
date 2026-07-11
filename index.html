@@ -283,6 +283,37 @@
     <div id="map"></div>
 </div>
 
+<div id="infoScreen" class="content-screen" style="display: none; overflow-y: auto; padding: 40px; background-color: #f9fafb;">
+    <div class="guide-title">⚙️ 시스템 설정 및 정보</div>
+    
+    <div class="stats-card">
+        <h3>소리 감지 민감도</h3>
+        <p class="stats-sub">주변 소음 환경에 맞춰 감지 기준을 조절하세요.</p>
+        
+        <div style="margin: 30px 0; text-align: center;">
+            <div style="display: flex; justify-content: space-between; font-size: 18px; color: #666; margin-bottom: 10px; font-weight: bold;">
+                <span>민감함 (조용한 곳)</span>
+                <span>보통 (기본값)</span>
+                <span>둔함 (시끄러운 곳)</span>
+            </div>
+            <input type="range" id="sensitivitySlider" min="50" max="95" value="80" step="5" style="width: 100%; height: 12px; cursor: pointer;">
+            <div id="sliderValue" style="font-size: 20px; font-weight: bold; margin-top: 15px; color: #ef4444;">위험 감지 기준: 80 dB</div>
+        </div>
+    </div>
+
+    <div class="stats-card" style="margin-top: 20px;">
+        <h3>애플리케이션 정보</h3>
+        <div class="guide-text" style="font-size: 18px; margin-top: 10px;">
+            • <strong>앱 이름:</strong> Back Sound (백사운드)<br>
+            • <strong>버전:</strong> v1.0.0 (Beta)<br>
+            • <strong>기능:</strong> 실시간 환경음 분석 및 보행자 위험 알림 보조<br><br>
+            <button id="btnClearData" style="width: 100%; padding: 15px; background-color: #374151; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;">
+                📊 오늘 기록 데이터 초기화
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="zoneToast" class="zone-alert-toast">⚠️ 위험 구역 진입 안내</div>
 
     <div id="topNav">
@@ -392,6 +423,25 @@
         const btnGuide = document.getElementById("btnGuide");
         const mainScreen = document.getElementById("mainScreen");
         const guideScreen = document.getElementById("guideScreen");
+        const btnInfo = document.getElementById("btnInfo");
+        const infoScreen = document.getElementById("infoScreen");
+
+        // 모든 화면 숨기기 및 네비게이션 활성화 초기화 함수
+function hideAllScreens() {
+    mainScreen.style.display = "none";
+    guideScreen.style.display = "none";
+    recordScreen.style.display = "none";
+    mapScreen.style.display = "none";
+    infoScreen.style.display = "none"; // 추가
+    
+    btnHome.classList.remove("active");
+    btnGuide.classList.remove("active");
+    btnRecord.classList.remove("active");
+    btnMap.classList.remove("active");
+    btnInfo.classList.remove("active"); // 추가
+    
+    document.body.style.backgroundColor = "white";
+}
 
         // 홈 버튼 클릭 시
         btnHome.addEventListener("click", () => {
@@ -653,7 +703,7 @@
             document.getElementById("level").innerText = "SOUND: " + Math.round(avg);
 
             // [올바른 위치] 데시벨 초과 감지 및 기록 저장 처리
-            if (avg > 80) {
+            if (avg > DANGER_THRESHOLD) {
                 document.body.style.backgroundColor = "red";
                 document.getElementById("warning").innerText = "위험";
                 document.getElementById("aiResult").innerText = "큰 소리 감지!"; 
@@ -703,6 +753,51 @@
             window.addEventListener("click", enterMain, { once: true });
             window.addEventListener("touchstart", enterMain, { once: true });
         };
+
+        // --- 설정 값 변수 선언 (기본값 80) ---
+let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
+let hasWarnedSensitivity = false; // 경고창이 한 번만 뜨도록 체크하는 변수
+
+// 스크립트 로드 시 슬라이더 초기 설정 초기화
+document.addEventListener("DOMContentLoaded", () => {
+    const slider = document.getElementById("sensitivitySlider");
+    const sliderLabel = document.getElementById("sliderValue");
+    const btnClearData = document.getElementById("btnClearData");
+
+    // 저장되어 있던 값이 있다면 슬라이더 위치 맞추기
+    slider.value = DANGER_THRESHOLD;
+    sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
+
+    // 슬라이더 조절 이벤트
+    slider.addEventListener("input", (e) => {
+        const value = parseInt(e.target.value);
+        DANGER_THRESHOLD = value;
+        sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
+        
+        // 기기에 설정값 즉시 저장 (로그인 없어도 유지됨)
+        localStorage.setItem("sound_threshold", value);
+
+        // [요청 기능] 기준을 90dB 이상으로 올려서 너무 둔감하게 만들었을 때 경고창 발생
+        if (value >= 90) {
+            if (!hasWarnedSensitivity) {
+                alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!\n이 상태에서는 아주 큰 소리가 아니면 위험 상황을 감지하지 못할 수 있습니다.");
+                hasWarnedSensitivity = true; // 한 번 떴으므로 차단
+            }
+        } else {
+            // 다시 민감도를 높이면 경고 초기화
+            hasWarnedSensitivity = false;
+        }
+    });
+
+    // 데이터 초기화 버튼 기능
+    btnClearData.addEventListener("click", () => {
+        if (confirm("정말로 오늘의 위험 감지 기록 데이터를 모두 삭제하시겠습니까?")) {
+            localStorage.removeItem("backsound_logs");
+            alert("데이터가 초기화되었습니다.");
+            if(typeof updateRecordScreen === "function") updateRecordScreen();
+        }
+    });
+});
 
         // 위험 데이터를 LocalStorage에 저장하는 함수 (중복 저장 방지용 시간 체크 포함)
         let lastSavedTime = 0;
@@ -828,6 +923,13 @@
             }
         });
 
+        // 정보(설정) 버튼 클릭 시 화면 전환 (새로 추가)
+btnInfo.addEventListener("click", () => {
+    hideAllScreens();
+    infoScreen.style.style.display = "block";
+    btnInfo.classList.add("active");
+});
+
         btnHome.addEventListener("click", () => {
             mapScreen.style.display = "none"; 
             btnHome.classList.add("active");
@@ -947,7 +1049,7 @@
                     if (distance <= zoneRadius) {
                         currentActiveZone = {
                             name: zoneName,
-                            msg: `👶 어린이 보호구역[${zoneName}] 진입! 차량 진입에 유의하세요.`
+                            msg: `어린이 보호구역[${zoneName}] 진입! 차량 진입에 유의하세요.`
                         };
                     }
                 }
