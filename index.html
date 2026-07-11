@@ -1049,7 +1049,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function updateRecordScreen() {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const now = new Date();
+const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const logs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
             const todayLogs = logs.filter(log => log.date === todayStr);
 
@@ -1066,7 +1067,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const timelineLog = document.getElementById("timelineLog");
             if (timelineLog) {
                 timelineLog.innerHTML = "";
-                [...todayLogs].reverse().slice(0, 20).forEach(log => {
+                [...todayLogs].reverse().slice(0, 50).forEach(log => {
                     const li = document.createElement("li");
                     li.className = "timeline-item";
                     li.innerHTML = `
