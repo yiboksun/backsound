@@ -44,7 +44,6 @@
             color: #000;
         }
 
-        /* 공통 중앙 화면 스타일 */
         .content-screen {
             position: fixed;
             top: 120px;
@@ -55,7 +54,6 @@
             box-sizing: border-box;
         }
 
-        /* 홈 화면 전용 스타일 */
         #mainScreen {
             display: flex;
             flex-direction: column;
@@ -64,7 +62,6 @@
             z-index: 10;
         }
 
-        /* 가이드 화면 전용 스타일 */
         #guideScreen {
             display: none;
             overflow-y: auto;
@@ -85,7 +82,6 @@
             color: #374151;
         }
 
-        /* 기록 화면 전체 컨테이너 */
         #recordScreen {
             display: none;
             position: fixed;
@@ -100,7 +96,6 @@
             z-index: 10;
         }
 
-        /* 통계 대시보드 카드 */
         .stats-card {
             background: white;
             border: 2px solid #333;
@@ -112,7 +107,6 @@
         .stats-card h3 { margin: 0 0 10px 0; font-size: 26px; font-weight: bold; }
         .stats-sub { font-size: 20px; color: #666; margin-top: 5px; }
 
-        /* 그래프 박스 */
         .chart-container {
             background: white;
             border: 2px solid #333;
@@ -122,8 +116,40 @@
             height: 320px;
         }
 
-        /* 타임라인 리스트 */
-        .timeline-title { font-size: 26px; font-weight: bold; margin-bottom: 15px; }
+        /* 📋 [새로 추가] 접기/펼치기 토글 버튼 스타일 */
+        .timeline-toggle-btn {
+            width: 100%;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .timeline-toggle-btn::after {
+            content: '▼';
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+        .timeline-toggle-btn.open::after {
+            transform: rotate(180deg);
+        }
+
+        /* 📋 [새로 추가] 접다 폈다 하는 실시간 콘텐트 박스 */
+        .timeline-wrapper {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
         .timeline-list { list-style: none; padding: 0; margin: 0; }
         .timeline-item {
             background: white;
@@ -301,7 +327,6 @@
             border: none;
         }
 
-        /* 날짜 선택 상단 바 스타일 */
         .date-controller {
             display: flex;
             justify-content: space-between;
@@ -353,15 +378,15 @@
 
     <div id="infoScreen" class="content-screen" style="display: none; overflow-y: auto; padding: 20px 20px 80px 20px; background-color: #f9fafb;">
         <div class="stats-card">
-            <h3>⚙️ 소리 감지 민감도</h3>
-            <p class="stats-sub">주변 소음 환경에 맞춰 감지 기준을 조절하세요.</p>
+            <h3>⚙️ 소리 감지 민감도 조절</h3>
+            <p class="stats-sub">너무 자주 울리면 기준 데시벨(dB)을 높여 둔하게 변경해 보세요.</p>
             <div style="margin: 20px 0; text-align: center;">
                 <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666; margin-bottom: 5px; font-weight: bold;">
-                    <span>민감함</span>
-                    <span>보통 (기본)</span>
-                    <span>둔함</span>
+                    <span>초민감 (40 dB)</span>
+                    <span>보통 (80 dB)</span>
+                    <span>아주 둔함 (110 dB)</span>
                 </div>
-                <input type="range" id="sensitivitySlider" min="50" max="95" value="80" step="5">
+                <input type="range" id="sensitivitySlider" min="40" max="110" value="80" step="1">
                 <div id="sliderValue" style="font-size: 18px; font-weight: bold; margin-top: 5px; color: #ef4444;">위험 감지 기준: 80 dB</div>
             </div>
         </div>
@@ -370,10 +395,10 @@
             <h3>📱 애플리케이션 정보</h3>
             <div class="guide-text" style="font-size: 18px; margin-top: 10px; line-height: 1.6;">
                 • <strong>앱 이름:</strong> Back Sound (백사운드)<br>
-                • <strong>버전:</strong> v1.0.0 (Beta)<br>
+                • <strong>버전:</strong> v1.1.0 (민감도&로그 커스텀)<br>
                 • <strong>기능:</strong> 실시간 환경음 분석 및 보행자 위험 알림 보조<br><br>
                 <button id="btnClearData" style="width: 100%; padding: 15px; background-color: #374151; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;">
-                    📊 오늘 기록 데이터 초기화
+                    📊 전체 저장 데이터 초기화
                 </button>
             </div>
         </div>
@@ -400,8 +425,13 @@
             <canvas id="dangerChart"></canvas>
         </div>
 
-        <div class="timeline-title">실시간 타임라인 로그</div>
-        <ul class="timeline-list" id="timelineLog"></ul>
+        <button id="btnToggleTimeline" class="timeline-toggle-btn">
+            📋 실시간 타임라인 로그 보기
+        </button>
+        
+        <div id="timelineWrapper" class="timeline-wrapper">
+            <ul class="timeline-list" id="timelineLog"></ul>
+        </div>
     </div>
 
     <div id="zoneToast" class="zone-alert-toast">⚠️ 위험 구역 진입 안내</div>
@@ -427,8 +457,7 @@
             Back Sound는 이어폰 사용 시 주변 소리를 놓치기 쉬운 문제를 해결하기 위해,<br>
             실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는 보행 안전 보조 앱입니다.<br>
             Back Sound는 주변 소리를 지속적으로 분석하여 평소보다 큰 소음이 발생하면 위험 상황으로 판단하고 사용자에게 알려줍니다.<br>
-            위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을 인지할 수 있도록 도와줍니다.<br>
-            또한 현재 주변 소리의 크기를 실시간으로 확인할 수 있어 보행 중에도 주변 환경 변화를 쉽게 파악할 수 있습니다.<br><br>
+            위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을 인지할 수 있도록 도와줍니다.<br><br>
             
             <strong>[주요 기능]</strong><br>
             1. 실시간 소리 시각화: 주변 소리의 크기와 주파수를 캔버스 파형으로 보여줍니다.<br>
@@ -439,8 +468,6 @@
             - 마이크 권한이 반드시 허용되어 있어야 정상 작동합니다.<br>
             - 배경 소음이 너무 큰 환경에서는 감지 성능이 저하될 수 있습니다.<br>
             - Android 기기에서는 진동 알림이 함께 제공됩니다.<br><br>
-            
-            Back Sound와 함께 더욱 안전한 보행 환경을 경험해 보세요.<br><br>
         </div>
     </div>
 
@@ -546,6 +573,14 @@
             recordScreen.style.display = "block";
             btnRecord.classList.add("active");
             selectedDateOffset = 0; 
+            
+            // 기록 열었을 때 아코디언 메뉴는 무조건 먼저 닫아놓기
+            const toggleBtn = document.getElementById("btnToggleTimeline");
+            const wrapper = document.getElementById("timelineWrapper");
+            if(toggleBtn && wrapper) {
+                toggleBtn.classList.remove("open");
+                wrapper.style.maxHeight = "0px";
+            }
             updateRecordScreen();
         });
 
@@ -642,6 +677,13 @@
                     `;
                     timelineLog.appendChild(li);
                 });
+            }
+
+            // 아코디언이 펼쳐져 있는 도중에 데이터가 실시간 추가되면 높이를 재계산해서 늘려줍니다.
+            const wrapper = document.getElementById("timelineWrapper");
+            const toggleBtn = document.getElementById("btnToggleTimeline");
+            if(wrapper && toggleBtn && toggleBtn.classList.contains("open")) {
+                wrapper.style.maxHeight = wrapper.scrollHeight + "px";
             }
 
             const hourlyData = new Array(24).fill(0);
@@ -978,6 +1020,22 @@
             const btnClearData = document.getElementById("btnClearData");
             const btnPrevDate = document.getElementById("btnPrevDate");
             const btnNextDate = document.getElementById("btnNextDate");
+            
+            // 📋 아코디언 토글 제어 이벤트 설정
+            const toggleBtn = document.getElementById("btnToggleTimeline");
+            const wrapper = document.getElementById("timelineWrapper");
+            
+            if(toggleBtn && wrapper) {
+                toggleBtn.addEventListener("click", () => {
+                    toggleBtn.classList.toggle("open");
+                    if (wrapper.style.maxHeight && wrapper.style.maxHeight !== "0px") {
+                        wrapper.style.maxHeight = "0px";
+                    } else {
+                        // 스크롤 내부 영역 크기만큼 유연하게 확장
+                        wrapper.style.maxHeight = wrapper.scrollHeight + "px";
+                    }
+                });
+            }
 
             if (slider && sliderLabel) {
                 slider.value = DANGER_THRESHOLD;
@@ -990,7 +1048,7 @@
                     
                     localStorage.setItem("sound_threshold", value);
 
-                    if (value >= 90) {
+                    if (value >= 95) {
                         if (!hasWarnedSensitivity) {
                             alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!\n이 상태에서는 아주 큰 소리가 아니면 위험 상황을 감지하지 못할 수 있습니다.");
                             hasWarnedSensitivity = true; 
@@ -1164,7 +1222,7 @@
             const dLng = (lng2 - lng1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLng/2) * Math.sin(dLng/2);
+                      Document.sin(dLng/2) * Math.sin(dLng/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             return R * c; 
         }
