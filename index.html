@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <title>Back Sound</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
 
     <style>
         body {
@@ -378,7 +379,7 @@
 
     <div id="infoScreen" class="content-screen" style="display: none; overflow-y: auto; padding: 20px 20px 80px 20px; background-color: #f9fafb;">
         <div class="stats-card">
-            <h3>⚙️ 소리 감지 민감도 조절</h3>
+            <h3>[소리 감지 민감도 조절]</h3>
             <p class="stats-sub">너무 자주 울리면 기준 데시벨(dB)을 높여 둔하게 변경해 보세요.</p>
             <div style="margin: 20px 0; text-align: center;">
                 <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666; margin-bottom: 5px; font-weight: bold;">
@@ -392,13 +393,13 @@
         </div>
 
         <div class="stats-card" style="margin-top: 20px;">
-            <h3>📱 애플리케이션 정보</h3>
+            <h3>[애플리케이션 정보]</h3>
             <div class="guide-text" style="font-size: 18px; margin-top: 10px; line-height: 1.6;">
                 • <strong>앱 이름:</strong> Back Sound (백사운드)<br>
                 • <strong>버전:</strong> v1.1.0 (민감도&로그 커스텀)<br>
                 • <strong>기능:</strong> 실시간 환경음 분석 및 보행자 위험 알림 보조<br><br>
                 <button id="btnClearData" style="width: 100%; padding: 15px; background-color: #374151; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;">
-                    📊 전체 저장 데이터 초기화
+                    전체 저장 데이터 초기화
                 </button>
             </div>
         </div>
@@ -412,7 +413,7 @@
         </div>
 
         <div class="stats-card">
-            <h3>📊 위험 소리 발생 비중</h3>
+            <h3>[위험 소리 발생 비중]</h3>
             <p class="stats-sub">선택한 날짜에 어떤 위험 요소가 많이 발생했는지 확인하세요.</p>
             <div class="chart-box">
                 <canvas id="ratioChart"></canvas>
@@ -426,7 +427,7 @@
         </div>
 
         <button id="btnToggleTimeline" class="timeline-toggle-btn">
-            📋 실시간 타임라인 로그 보기
+             [실시간 타임라인 로그 보기]
         </button>
         
         <div id="timelineWrapper" class="timeline-wrapper">
@@ -434,7 +435,7 @@
         </div>
     </div>
 
-    <div id="zoneToast" class="zone-alert-toast">⚠️ 위험 구역 진입 안내</div>
+    <div id="zoneToast" class="zone-alert-toast"> 위험 구역 진입 안내</div>
 
     <div id="topNav">
         <span class="appName">Back Sound</span>
@@ -1222,7 +1223,7 @@
             const dLng = (lng2 - lng1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Document.sin(dLng/2) * Math.sin(dLng/2);
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             return R * c; 
         }
