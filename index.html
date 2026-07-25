@@ -224,7 +224,7 @@ img, canvas {
             font-size: 30px;
             font-weight: bold;
             color: black;
-            background-color: white; 
+            background-color: transparent !important;
             z-index: 50; 
             text-align: center;
             line-height: 1.5;
@@ -469,7 +469,9 @@ img, canvas {
     <img src="logo.png" class="logo">
 </div>
 
-    <div id="startGuide">화면을 터치하면<br>소리 감지가 시작됩니다</div>
+    <div id="startGuide" style="background-color: transparent;">
+    화면을 터치하면 소리 감지가 시작됩니다
+</div>
 
     <div id="mainScreen" class="content-screen"> 
         <canvas id="wave"></canvas>
@@ -571,11 +573,25 @@ img, canvas {
     // 초기 시작 이벤트 처리
     // ----------------------------------------------------
     window.onload = () => {
-        const aiResultEl = document.getElementById("aiResult");
-        if (aiResultEl) aiResultEl.innerText = "화면을 터치하면 시작합니다";
-        window.addEventListener("click", enterMain, { once: true });
-        window.addEventListener("touchstart", enterMain, { once: true });
+    const aiResultEl = document.getElementById("aiResult");
+    if (aiResultEl) aiResultEl.innerText = "화면을 터치하면 시작합니다";
+    
+    const handleStart = (e) => {
+        if (isStarted) return;
+        isStarted = true;
+
+        // 터치하자마자 문구를 바로 변경!
+        if (aiResultEl) aiResultEl.innerText = "소리 분석 최적화 중...";
+
+        window.removeEventListener("click", handleStart);
+        window.removeEventListener("touchstart", handleStart);
+        
+        enterMain();
     };
+
+    window.addEventListener("click", handleStart);
+    window.addEventListener("touchstart", handleStart);
+};
 
     function hideAllScreens() {
         if (mainScreen) mainScreen.style.display = "none";
@@ -594,12 +610,15 @@ img, canvas {
     }
 
     if (btnHome) {
-        btnHome.addEventListener("click", () => {
-            hideAllScreens();
-            if (mainScreen) mainScreen.style.display = "flex";
-            btnHome.classList.add("active");
-        });
-    }
+    btnHome.addEventListener("click", () => {
+        hideAllScreens();
+        if (mainScreen) mainScreen.style.display = "flex";
+        btnHome.classList.add("active");
+        setTimeout(() => {
+            resizeCanvas();
+        }, 50);
+    });
+}
 
     if (btnGuide) {
         btnGuide.addEventListener("click", () => {
@@ -879,13 +898,13 @@ img, canvas {
         const aiResultEl = document.getElementById("aiResult");
         const warningEl = document.getElementById("warning");
 
-        if (audioBuffer.length < SAMPLE_WINDOW) {
-            if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
-                aiResultEl.innerText = "버퍼 수집중...";
-            }
-            setTimeout(aiLoop, 250);
-            return;
-        }
+       if (audioBuffer.length < SAMPLE_WINDOW) {
+    if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
+        aiResultEl.innerText = " 주변 소리 분석 중...";
+    }
+    setTimeout(aiLoop, 250);
+    return;
+}
 
         aiRunning = true;
 
@@ -952,7 +971,7 @@ img, canvas {
 
                 // 2회 연속 감지 시 위험 알림 실행
                 if (hornCounter >= 2 || bikeCounter >= 2) {
-                    if (aiResultEl) aiResultEl.innerText = "🚨 주변에 차량이 접근하고 있습니다.";
+                    if (aiResultEl) aiResultEl.innerText = " 주변에 차량이 접근하고 있습니다.";
                     document.body.style.backgroundColor = "red";
                     if (warningEl) warningEl.innerText = "위험";
 
@@ -960,7 +979,7 @@ img, canvas {
                     saveDangerLog("차량 접근");
                 } else {
                     // 차량 위험이 아닐 때 (대화, 주변 소음 등)
-                    if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+                    if (aiResultEl) aiResultEl.innerText = " 주변 소리를 탐색 중입니다.";
                     if (mainScreen && mainScreen.style.display !== "none") {
                         document.body.style.backgroundColor = "white";
                     }
@@ -1053,8 +1072,9 @@ img, canvas {
 
     function resizeCanvas() {
         if (!canvas) return;
-        canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : window.innerWidth;
-        canvas.height = 200;
+        const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+    canvas.width = parentWidth > 0 ? parentWidth : window.innerWidth;
+    canvas.height = 200;
     }
 
     window.addEventListener("resize", resizeCanvas);
