@@ -469,8 +469,14 @@ img, canvas {
     <img src="logo.png" class="logo">
 </div>
 
-    <div id="startGuide" style="background-color: transparent;">
-    화면을 터치하면 소리 감지가 시작됩니다
+    <div id="startGuide" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: transparent; z-index: 9999;">
+    <h2>화면을 터치하면 소리 감지가 시작됩니다</h2>
+</div>
+
+<div id="mainScreen" style="display: none; flex-direction: column; align-items: center;">
+    <div id="level">SOUND: 0</div>
+    <div id="aiResult"> 소리 분석 최적화 중...</div>
+    <canvas id="wave"></canvas>
 </div>
 
     <div id="mainScreen" class="content-screen"> 
@@ -523,75 +529,98 @@ img, canvas {
     <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
     
     <script>
+    // 변수 선언부
     let audioContext;
     let analyser;
     let dataArray;
     let micStream;
-
     let aiRunning = false;
     let canvas;
     let ctx;
     let audioBuffer = [];
     let isRunning = false;
-    
-    let hornCounter = 0;
-    let bikeCounter = 0;
-    let isBeepCooldown = false; 
-    let lastSavedTime = 0;
+    let isStarted = false; // 💡 추가된 시작 플래그
 
-    const SAMPLE_WINDOW = 48000;
-
-    window.classifier = null;
-    window.isAIReady = false;
-
-    let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
-    let hasWarnedSensitivity = false; 
-
-    const btnHome = document.getElementById("btnHome");
-    const btnGuide = document.getElementById("btnGuide");
-    const btnRecord = document.getElementById("btnRecord");
-    const btnMap = document.getElementById("btnMap");
-    const btnInfo = document.getElementById("btnInfo");
-
-    const mainScreen = document.getElementById("mainScreen");
-    const guideScreen = document.getElementById("guideScreen");
-    const recordScreen = document.getElementById("recordScreen");
-    const mapScreen = document.getElementById("mapScreen");
-    const infoScreen = document.getElementById("infoScreen");
-
-    let dangerChartInstance = null; 
-    let ratioChartInstance = null; 
-    let selectedDateOffset = 0;    
-
-    let mapInstance = null;
-    let userMarker = null;
-    let isMapInitialized = false;
-    let insideZoneName = null;     
-    let allDangerZones = [];       
-
-    // ----------------------------------------------------
-    // 초기 시작 이벤트 처리
-    // ----------------------------------------------------
+    // 1. [교체된 코드] window.onload 이벤트
     window.onload = () => {
-    const aiResultEl = document.getElementById("aiResult");
-    if (aiResultEl) aiResultEl.innerText = "화면을 터치하면 시작합니다";
-    
-    const handleStart = (e) => {
-        if (isStarted) return;
-        isStarted = true;
+        const handleStart = () => {
+            if (isStarted) return;
+            isStarted = true;
 
-        // 터치하자마자 문구를 바로 변경!
-        if (aiResultEl) aiResultEl.innerText = "소리 분석 최적화 중...";
+            // 이벤트 중복 실행 방지
+            window.removeEventListener("click", handleStart);
+            window.removeEventListener("touchstart", handleStart);
+            
+            enterMain();
+        };
 
-        window.removeEventListener("click", handleStart);
-        window.removeEventListener("touchstart", handleStart);
-        
-        enterMain();
+        window.addEventListener("click", handleStart);
+        window.addEventListener("touchstart", handleStart);
     };
 
-    window.addEventListener("click", handleStart);
-    window.addEventListener("touchstart", handleStart);
-};
+    // 2. [교체된 코드] enterMain 함수
+    async function enterMain() {
+        try {
+            // 1) "화면을 터치하면 소리 감지가 시작됩니다" 문구 완전히 숨기기
+            const startGuideEl = document.getElementById("startGuide");
+            if (startGuideEl) {
+                startGuideEl.style.display = "none";
+            }
+
+            // 2) 메인 화면(SOUND, 파형 등) 표시
+            const mainScreenEl = document.getElementById("mainScreen");
+            if (mainScreenEl) {
+                mainScreenEl.style.display = "flex";
+            }
+
+            // 3) 하단 홈 버튼 활성화
+            if (typeof btnHome !== 'undefined' && btnHome) btnHome.classList.add("active");
+
+            // 4) 오디오 및 AI 초기화 진행
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContextClass();
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+
+            const mic = audioContext.createMediaStreamSource(micStream);
+            mic.connect(analyser);
+
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+            mic.connect(processor);
+            processor.connect(audioContext.destination);
+
+            processor.onaudioprocess = function(e) {
+                const input = e.inputBuffer.getChannelData(0);
+                for (let i = 0; i < input.length; i++) {
+                    let s = Math.max(-1, Math.min(1, input[i]));
+                    audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
+                }
+                if (audioBuffer.length > SAMPLE_WINDOW * 2) {
+                    audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
+                }
+            };
+
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            canvas = document.getElementById("wave");
+            if (canvas) ctx = canvas.getContext("2d");
+            
+            resizeCanvas();
+
+            isRunning = true;
+            drawLoop();
+            aiLoop();
+
+        } catch (e) {
+            console.error(e);
+            alert("마이크 연결 오류: " + e.message);
+        }
+    }
 
     function hideAllScreens() {
         if (mainScreen) mainScreen.style.display = "none";
@@ -822,67 +851,6 @@ img, canvas {
                     cutout: '65%' 
                 }
             });
-        }
-    }
-
-    async function enterMain() {
-        try {
-            const startGuideEl = document.getElementById("startGuide");
-            if (startGuideEl) startGuideEl.style.display = "none";
-            log("시작 중...");
-
-            if (typeof EdgeImpulseClassifier !== 'undefined') {
-                window.classifier = new EdgeImpulseClassifier();
-                try {
-                    await window.classifier.init();
-                    window.isAIReady = true;
-                    log("AI 준비 완료");
-                } catch (err) {
-                    log("AI 실패: " + err.message);
-                }
-            } else {
-                log("AI 라이브러리 없음");
-            }
-
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            await audioContext.resume();
-
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
-
-            const mic = audioContext.createMediaStreamSource(micStream);
-            mic.connect(analyser);
-
-            const processor = audioContext.createScriptProcessor(4096, 1, 1);
-            mic.connect(processor);
-            processor.connect(audioContext.destination);
-
-            processor.onaudioprocess = function(e) {
-                const input = e.inputBuffer.getChannelData(0);
-                for (let i = 0; i < input.length; i++) {
-                    let s = Math.max(-1, Math.min(1, input[i]));
-                    audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
-                }
-                if (audioBuffer.length > SAMPLE_WINDOW * 2) {
-                    audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
-                }
-            };
-
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            canvas = document.getElementById("wave");
-            if (canvas) ctx = canvas.getContext("2d");
-            resizeCanvas();
-
-            isRunning = true;
-            drawLoop();
-            aiLoop();
-            log("실행 완료");
-
-        } catch (e) {
-            console.error(e);
-            alert(e.message);
-            log("에러 : " + e.message);
         }
     }
 
