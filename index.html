@@ -414,12 +414,14 @@ img, canvas {
 
     <div id="zoneToast" class="zone-alert-toast">위험 구역 진입 안내</div>
 
-    <div id="mainScreen" class="content-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-        <div id="warning" style="font-size: 2.5rem; font-weight: bold; color: #ef4444; height: 50px;"></div>
-        <canvas id="wave" style="width: 100%; max-width: 500px; height: 200px; margin-bottom: 20px;"></canvas>
-        <div id="level" style="font-size: 1.8rem; font-weight: bold;">SOUND: 0</div>
-        <div id="aiResult" style="font-size: 1.1rem; color: #666; margin-top: 10px;">AI: 대기 중...</div>
-    </div>
+    <div id="mainScreen" class="content-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding-top: 30px;">
+    <div id="warning" style="font-size: 2.5rem; font-weight: bold; color: #ef4444; height: 40px; margin-bottom: 10px;"></div>
+    
+    <canvas id="wave" style="width: 100%; max-width: 500px; height: 180px; margin-bottom: 15px;"></canvas>
+    
+    <div id="level" style="font-size: 2rem; font-weight: bold; margin-bottom: 8px;">SOUND: 0</div>
+    <div id="aiResult" style="font-size: 1.1rem; color: #555;">🔍 주변 소리를 탐색 중입니다.</div>
+</div>
 
     <div id="guideScreen" class="content-screen" style="display: none;">
         <div class="guide-title"> [Back Sound 이용 가이드] </div>
@@ -1133,58 +1135,62 @@ img, canvas {
     }
 
     function drawVisualizer() {
-        if (!ctx || !canvas || !dataArray) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // 캔버스 가로 길이에 맞춘 정확한 막대 폭 계산
-        const barWidth = (canvas.width / dataArray.length);
-        let x = 0;
+    if (!ctx || !canvas || !dataArray) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const barWidth = (canvas.width / dataArray.length);
+    let x = 0;
 
-        for (let i = 0; i < dataArray.length; i++) {
-            const barHeight = (dataArray[i] / 255) * canvas.height;
-            const y = (canvas.height - barHeight) / 2;
+    for (let i = 0; i < dataArray.length; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height;
+        const y = (canvas.height - barHeight) / 2;
 
-            ctx.fillStyle = "#3b82f6";
-            ctx.fillRect(x, y, barWidth - 1, barHeight);
-            x += barWidth;
-        }
+        // 파형 색상: 검은색
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x, y, barWidth - 1, barHeight);
+        x += barWidth;
     }
+}
 
     function drawLoop() {
-        requestAnimationFrame(drawLoop);
+    requestAnimationFrame(drawLoop);
 
-        if (!isStarted || !isRunning || !analyser || !dataArray) return;
+    if (!isStarted || !isRunning || !analyser || !dataArray) return;
 
-        analyser.getByteFrequencyData(dataArray);
+    analyser.getByteFrequencyData(dataArray);
 
-        drawVisualizer();
+    drawVisualizer();
 
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-        const avg = sum / dataArray.length;
-        const decibel = Math.round(avg * 0.8 + 30); // 데시벨 보정 계산
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+    const avg = sum / dataArray.length;
+    const decibel = Math.round(avg * 0.8 + 30); // 데시벨 계산 값
 
-        const levelEl = document.getElementById("level");
-        const warningEl = document.getElementById("warning");
-        const aiResultEl = document.getElementById("aiResult");
+    const levelEl = document.getElementById("level");
+    const warningEl = document.getElementById("warning");
+    const aiResultEl = document.getElementById("aiResult");
 
-        if (levelEl) levelEl.innerText = "SOUND: " + decibel + " dB";
+    // ★ dB 글자 완전히 삭제하고 숫자만 표기! (예: SOUND: 45)
+    if (levelEl) levelEl.innerText = "SOUND: " + decibel;
 
-        if (decibel > DANGER_THRESHOLD) {
-            document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
-            if (warningEl) warningEl.innerText = "위험";
-            if (aiResultEl) aiResultEl.innerText = "큰 소리 감지!"; 
-            triggerAlert();
-            saveDangerLog("데시벨 초과 큰 소리"); 
-        } else {
-            if (hornCounter < 2 && bikeCounter < 2) {
-                if (mainScreen && mainScreen.style.display !== "none") {
-                    document.body.style.backgroundColor = "white";
-                }
-                if (warningEl) warningEl.innerText = "";
+    if (decibel > DANGER_THRESHOLD) {
+        document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
+        if (warningEl) warningEl.innerText = "위험";
+        if (aiResultEl) aiResultEl.innerText = "큰 소리 감지!"; 
+        triggerAlert();
+        saveDangerLog("데시벨 초과 큰 소리"); 
+    } else {
+        if (hornCounter < 2 && bikeCounter < 2) {
+            if (mainScreen && mainScreen.style.display !== "none") {
+                document.body.style.backgroundColor = "white";
+            }
+            if (warningEl) warningEl.innerText = "";
+            if (decibel >= 45 && aiResultEl) {
+                aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
             }
         }
     }
+}
 
     // ----------------------------------------------------
     // [10] 지도 및 위치 추적 로직
