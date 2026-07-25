@@ -529,7 +529,16 @@ img, canvas {
     <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
     
     <script>
-    // 💡 [핵심] 변수를 최상단에 미리 선언하여 참조 에러 방지
+    // ----------------------------------------------------
+    // [1] 전역 변수 선언 및 초기화
+    // ----------------------------------------------------
+    let hornCounter = 0;
+    let bikeCounter = 0;
+    let isBeepCooldown = false;
+    let lastSavedTime = 0;
+    let selectedDateOffset = 0;
+    let hasWarnedSensitivity = false; // 슬라이더 경고 상태 변수
+
     let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
     let SAMPLE_WINDOW = 48000;
 
@@ -544,18 +553,39 @@ img, canvas {
     let isRunning = false;
     let isStarted = false;
 
-    // 초기 화면 로딩
-    window.onload = () => {
-        // 시작 전 메인 화면(SOUND, 파형 등)을 강제로 숨김
-        const mainScreenEl = document.getElementById("mainScreen");
-        if (mainScreenEl) {
-            mainScreenEl.style.display = "none";
-        }
+    // 차트 및 지도 관련 변수
+    let dangerChartInstance = null;
+    let ratioChartInstance = null;
+    let isMapInitialized = false;
+    let mapInstance = null;
+    let userMarker = null;
+    let allDangerZones = [];
+    let insideZoneName = null;
 
-        const startGuideEl = document.getElementById("startGuide");
-        if (startGuideEl) {
-            startGuideEl.style.display = "flex";
-        }
+    // DOM 요소 캐싱 변수
+    let mainScreen, guideScreen, recordScreen, mapScreen, infoScreen, startGuide;
+    let btnHome, btnGuide, btnRecord, btnMap, btnInfo;
+
+    // ----------------------------------------------------
+    // [2] 초기 화면 로딩 및 시작 이벤트
+    // ----------------------------------------------------
+    window.onload = () => {
+        mainScreen = document.getElementById("mainScreen");
+        guideScreen = document.getElementById("guideScreen");
+        recordScreen = document.getElementById("recordScreen");
+        mapScreen = document.getElementById("mapScreen");
+        infoScreen = document.getElementById("infoScreen");
+        startGuide = document.getElementById("startGuide");
+
+        btnHome = document.getElementById("btnHome");
+        btnGuide = document.getElementById("btnGuide");
+        btnRecord = document.getElementById("btnRecord");
+        btnMap = document.getElementById("btnMap");
+        btnInfo = document.getElementById("btnInfo");
+
+        // 앱 시작 전 안내 화면만 표시
+        hideAllScreens();
+        if (startGuide) startGuide.style.display = "flex";
 
         const handleStart = () => {
             if (isStarted) return;
@@ -571,23 +601,17 @@ img, canvas {
         window.addEventListener("touchstart", handleStart);
     };
 
+    // ----------------------------------------------------
+    // [3] 메인 화면 진입 및 마이크 설정
+    // ----------------------------------------------------
     async function enterMain() {
         try {
-            // 1. 안내 문구 레이어 감추기
-            const startGuideEl = document.getElementById("startGuide");
-            if (startGuideEl) {
-                startGuideEl.style.display = "none";
-            }
+            if (startGuide) startGuide.style.display = "none";
+            
+            hideAllScreens();
+            if (mainScreen) mainScreen.style.display = "flex";
+            if (btnHome) btnHome.classList.add("active");
 
-            // 2. 메인 화면(SOUND, 파형) 켜기
-            const mainScreenEl = document.getElementById("mainScreen");
-            if (mainScreenEl) {
-                mainScreenEl.style.display = "flex";
-            }
-
-            if (typeof btnHome !== 'undefined' && btnHome) btnHome.classList.add("active");
-
-            // 3. 마이크 및 오디오 설정
             micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -633,6 +657,9 @@ img, canvas {
         }
     }
 
+    // ----------------------------------------------------
+    // [4] 화면 전환 및 캔버스 조절
+    // ----------------------------------------------------
     function hideAllScreens() {
         if (mainScreen) mainScreen.style.display = "none";
         if (guideScreen) guideScreen.style.display = "none";
@@ -649,62 +676,186 @@ img, canvas {
         document.body.style.backgroundColor = "white";
     }
 
-    if (btnHome) {
-    btnHome.addEventListener("click", () => {
-        hideAllScreens();
-        if (mainScreen) mainScreen.style.display = "flex";
-        btnHome.classList.add("active");
-        setTimeout(() => {
-            resizeCanvas();
-        }, 50);
+    function resizeCanvas() {
+        if (!canvas) return;
+        const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+        canvas.width = parentWidth > 0 ? parentWidth : window.innerWidth;
+        canvas.height = 200;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    // ----------------------------------------------------
+    // [5] DOM 이벤드 연결 (버튼 및 슬라이더)
+    // ----------------------------------------------------
+    document.addEventListener("DOMContentLoaded", () => {
+        requestAppPermissions();
+
+        const btnHomeEl = document.getElementById("btnHome");
+        const btnGuideEl = document.getElementById("btnGuide");
+        const btnRecordEl = document.getElementById("btnRecord");
+        const btnMapEl = document.getElementById("btnMap");
+        const btnInfoEl = document.getElementById("btnInfo");
+
+        if (btnHomeEl) {
+            btnHomeEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (mainScreen) mainScreen.style.display = "flex";
+                btnHomeEl.classList.add("active");
+                setTimeout(resizeCanvas, 50);
+            });
+        }
+
+        if (btnGuideEl) {
+            btnGuideEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (guideScreen) guideScreen.style.display = "block";
+                btnGuideEl.classList.add("active");
+            });
+        }
+
+        if (btnRecordEl) {
+            btnRecordEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (recordScreen) recordScreen.style.display = "block";
+                btnRecordEl.classList.add("active");
+                selectedDateOffset = 0; 
+                
+                const toggleBtn = document.getElementById("btnToggleTimeline");
+                const wrapper = document.getElementById("timelineWrapper");
+                if (toggleBtn && wrapper) {
+                    toggleBtn.classList.remove("open");
+                    wrapper.style.maxHeight = "0px";
+                }
+                updateRecordScreen();
+            });
+        }
+
+        if (btnMapEl) {
+            btnMapEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (mapScreen) mapScreen.style.display = "block";
+                btnMapEl.classList.add("active");
+                if (!isMapInitialized) {
+                    initMapSystem();
+                    isMapInitialized = true;
+                }
+            });
+        }
+
+        if (btnInfoEl) {
+            btnInfoEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (infoScreen) infoScreen.style.display = "block";
+                btnInfoEl.classList.add("active");
+            });
+        }
+
+        const slider = document.getElementById("sensitivitySlider");
+        const sliderLabel = document.getElementById("sliderValue");
+        const btnClearData = document.getElementById("btnClearData");
+        const btnPrevDate = document.getElementById("btnPrevDate");
+        const btnNextDate = document.getElementById("btnNextDate");
+        const toggleBtn = document.getElementById("btnToggleTimeline");
+        const wrapper = document.getElementById("timelineWrapper");
+        
+        if (toggleBtn && wrapper) {
+            toggleBtn.addEventListener("click", () => {
+                toggleBtn.classList.toggle("open");
+                if (wrapper.style.maxHeight && wrapper.style.maxHeight !== "0px") {
+                    wrapper.style.maxHeight = "0px";
+                } else {
+                    wrapper.style.maxHeight = wrapper.scrollHeight + "px";
+                }
+            });
+        }
+
+        if (slider && sliderLabel) {
+            slider.value = DANGER_THRESHOLD;
+            sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
+
+            slider.addEventListener("input", (e) => {
+                const value = parseInt(e.target.value);
+                DANGER_THRESHOLD = value;
+                sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
+                localStorage.setItem("sound_threshold", value);
+
+                if (value >= 95) {
+                    if (!hasWarnedSensitivity) {
+                        alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!\n이 상태에서는 아주 큰 소리가 아니면 위험 상황을 감지하지 못할 수 있습니다.");
+                        hasWarnedSensitivity = true; 
+                    }
+                } else {
+                    hasWarnedSensitivity = false;
+                }
+            });
+        }
+
+        if (btnClearData) {
+            btnClearData.addEventListener("click", () => {
+                if (confirm("정말로 기록 데이터를 모두 삭제하시겠습니까?")) {
+                    localStorage.removeItem("backsound_logs");
+                    alert("데이터가 초기화되었습니다.");
+                    updateRecordScreen();
+                }
+            });
+        }
+
+        if (btnPrevDate) {
+            btnPrevDate.addEventListener("click", () => {
+                if (selectedDateOffset > -6) {
+                    selectedDateOffset--;
+                    updateRecordScreen();
+                }
+            });
+        }
+
+        if (btnNextDate) {
+            btnNextDate.addEventListener("click", () => {
+                if (selectedDateOffset < 0) {
+                    selectedDateOffset++;
+                    updateRecordScreen();
+                }
+            });
+        }
     });
-}
 
-    if (btnGuide) {
-        btnGuide.addEventListener("click", () => {
-            hideAllScreens();
-            if (guideScreen) guideScreen.style.display = "block";
-            btnGuide.classList.add("active");
-        });
+    // ----------------------------------------------------
+    // [6] 권한 요청 및 로그
+    // ----------------------------------------------------
+    function log(msg) {
+        const debugEl = document.getElementById("debug");
+        if (debugEl) {
+            debugEl.innerText = typeof msg === "object" ? JSON.stringify(msg, null, 2) : msg;
+        }
     }
 
-    if (btnRecord) {
-        btnRecord.addEventListener("click", () => {
-            hideAllScreens();
-            if (recordScreen) recordScreen.style.display = "block";
-            btnRecord.classList.add("active");
-            selectedDateOffset = 0; 
-            
-            const toggleBtn = document.getElementById("btnToggleTimeline");
-            const wrapper = document.getElementById("timelineWrapper");
-            if (toggleBtn && wrapper) {
-                toggleBtn.classList.remove("open");
-                wrapper.style.maxHeight = "0px";
-            }
-            updateRecordScreen();
-        });
+    async function requestAppPermissions() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            console.log("마이크 권한 획득 성공");
+        } catch (err) {
+            console.error("마이크 권한 거부됨:", err);
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => { console.log("위치 권한 획득 성공"); },
+                (err) => { console.error("위치 권한 거부됨:", err.message); },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
     }
 
-    if (btnMap) {
-        btnMap.addEventListener("click", () => {
-            hideAllScreens();
-            if (mapScreen) mapScreen.style.display = "block";
-            btnMap.classList.add("active");
-            if (!isMapInitialized) {
-                initMapSystem();
-                isMapInitialized = true;
-            }
-        });
-    }
-
-    if (btnInfo && infoScreen) {
-        btnInfo.addEventListener("click", () => {
-            hideAllScreens();
-            infoScreen.style.display = "block";
-            btnInfo.classList.add("active");
-        });
-    }
-
+    // ----------------------------------------------------
+    // [7] 데이터 기록 관리
+    // ----------------------------------------------------
     function getTargetDateString(offset) {
         const d = new Date();
         d.setDate(d.getDate() + offset);
@@ -765,7 +916,7 @@ img, canvas {
         const totalEl = document.getElementById("statTotal");
         const detailsEl = document.getElementById("statDetails");
         if (totalEl) totalEl.innerText = `${selectedDateOffset === 0 ? '오늘' : '선택일'} 감지된 위험: 총 ${totalCount}회`;
-        if (detailsEl) detailsEl.innerText = ` 차량 접근: ${hornCount}회 | 큰소리: ${loudCount}회`;
+        if (detailsEl) detailsEl.innerText = `차량 접근: ${hornCount}회 | 큰소리: ${loudCount}회`;
 
         const timelineLog = document.getElementById("timelineLog");
         if (timelineLog) {
@@ -797,9 +948,7 @@ img, canvas {
         const chartEl = document.getElementById('dangerChart');
         if (chartEl && typeof Chart !== 'undefined') {
             const ctxChart = chartEl.getContext('2d');
-            if (dangerChartInstance) {
-                dangerChartInstance.destroy();
-            }
+            if (dangerChartInstance) dangerChartInstance.destroy();
 
             dangerChartInstance = new Chart(ctxChart, {
                 type: 'line',
@@ -830,9 +979,7 @@ img, canvas {
         const ratioChartEl = document.getElementById('ratioChart');
         if (ratioChartEl && typeof Chart !== 'undefined') {
             const ctxRatio = ratioChartEl.getContext('2d');
-            if (ratioChartInstance) {
-                ratioChartInstance.destroy();
-            }
+            if (ratioChartInstance) ratioChartInstance.destroy();
 
             const hasData = totalCount > 0;
             const chartData = hasData ? [hornCount, loudCount] : [0, 1];
@@ -866,7 +1013,7 @@ img, canvas {
     }
 
     // ----------------------------------------------------
-    // 수정된 AI 루프 함수 (4가지 레이블 분류 반영 및 안전성 보장)
+    // [8] AI 모델 루프
     // ----------------------------------------------------
     function aiLoop() {
         if (!isRunning || !window.isAIReady || !window.classifier || aiRunning) {
@@ -877,13 +1024,13 @@ img, canvas {
         const aiResultEl = document.getElementById("aiResult");
         const warningEl = document.getElementById("warning");
 
-       if (audioBuffer.length < SAMPLE_WINDOW) {
-    if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
-        aiResultEl.innerText = " 주변 소리 분석 중...";
-    }
-    setTimeout(aiLoop, 250);
-    return;
-}
+        if (audioBuffer.length < SAMPLE_WINDOW) {
+            if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
+                aiResultEl.innerText = "주변 소리 분석 중...";
+            }
+            setTimeout(aiLoop, 250);
+            return;
+        }
 
         aiRunning = true;
 
@@ -918,25 +1065,16 @@ img, canvas {
             if (result && result.results) {
                 let hornScore = 0;
                 let bikeScore = 0;
-                let ambientScore = 0;
-                let convoScore = 0;
 
                 result.results.forEach(r => {
                     const label = r.label.toLowerCase();
-
-                    // 모델 오타 레이블 'car born' 및 'motorcycle' 확인
                     if (label === "car born" || label === "car_horn") {
                         hornScore = r.value;
                     } else if (label === "motorcycle") {
                         bikeScore = r.value;
-                    } else if (label === "ambient") {
-                        ambientScore = r.value;
-                    } else if (label === "conversation") {
-                        convoScore = r.value;
                     }
                 });
 
-                // 임계값 판단 (0.8 이상일 때 임계점 카운트 증가)
                 if (hornScore >= 0.8) {
                     hornCounter++;
                     bikeCounter = 0;
@@ -948,17 +1086,15 @@ img, canvas {
                     bikeCounter = 0;
                 }
 
-                // 2회 연속 감지 시 위험 알림 실행
                 if (hornCounter >= 2 || bikeCounter >= 2) {
-                    if (aiResultEl) aiResultEl.innerText = " 주변에 차량이 접근하고 있습니다.";
+                    if (aiResultEl) aiResultEl.innerText = "주변에 차량이 접근하고 있습니다.";
                     document.body.style.backgroundColor = "red";
                     if (warningEl) warningEl.innerText = "위험";
 
                     triggerAlert();
                     saveDangerLog("차량 접근");
                 } else {
-                    // 차량 위험이 아닐 때 (대화, 주변 소음 등)
-                    if (aiResultEl) aiResultEl.innerText = " 주변 소리를 탐색 중입니다.";
+                    if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
                     if (mainScreen && mainScreen.style.display !== "none") {
                         document.body.style.backgroundColor = "white";
                     }
@@ -973,6 +1109,9 @@ img, canvas {
         }
     }
 
+    // ----------------------------------------------------
+    // [9] 알림 및 파형(Visualizer) 메인 그리기 루프
+    // ----------------------------------------------------
     function triggerAlert() {
         if (!isBeepCooldown) {
             playBeep();
@@ -998,17 +1137,34 @@ img, canvas {
         oscillator.stop(audioContext.currentTime + 0.2);
     }
 
+    function drawVisualizer() {
+        if (!ctx || !canvas || !dataArray) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let x = 0;
+        const barWidth = (canvas.width / dataArray.length) * 1.5;
+
+        for (let i = 0; i < dataArray.length; i++) {
+            const barHeight = dataArray[i] * 1.7;
+            const y = (canvas.height - barHeight) / 2;
+
+            ctx.fillStyle = "black";
+            ctx.fillRect(x, y, barWidth, barHeight);
+            x += barWidth + 3;
+        }
+    }
+
     function drawLoop() {
         requestAnimationFrame(drawLoop);
 
-        if (!isRunning || !analyser || !dataArray || !ctx) return;
+        if (!isStarted || !isRunning || !analyser || !dataArray) return;
 
         analyser.getByteFrequencyData(dataArray);
 
+        // 시각화 파형 그리기 호출
+        drawVisualizer();
+
         let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
-        }
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
         const avg = sum / dataArray.length;
 
         const levelEl = document.getElementById("level");
@@ -1034,131 +1190,10 @@ img, canvas {
                 }
             }
         }
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let x = 0;
-        const barWidth = (canvas.width / dataArray.length) * 1.5;
-
-        for (let i = 0; i < dataArray.length; i++) {
-            const barHeight = dataArray[i] * 1.7;
-            const y = (canvas.height - barHeight) / 2;
-
-            ctx.fillStyle = "black";
-            ctx.fillRect(x, y, barWidth, barHeight);
-            x += barWidth + 3;
-        }
     }
-
-    function resizeCanvas() {
-        if (!canvas) return;
-        const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
-    canvas.width = parentWidth > 0 ? parentWidth : window.innerWidth;
-    canvas.height = 200;
-    }
-
-    window.addEventListener("resize", resizeCanvas);
-
-    function log(msg) {
-        const debugEl = document.getElementById("debug");
-        if (debugEl) {
-            debugEl.innerText = typeof msg === "object" ? JSON.stringify(msg, null, 2) : msg;
-        }
-    }
-
-    async function requestAppPermissions() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop());
-            console.log("마이크 권한 획득 성공");
-        } catch (err) {
-            console.error("마이크 권한 거부됨:", err);
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => { console.log("위치 권한 획득 성공"); },
-                (err) => { console.error("위치 권한 거부됨:", err.message); },
-                { enableHighAccuracy: true, timeout: 5000 }
-            );
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        requestAppPermissions();
-
-        const slider = document.getElementById("sensitivitySlider");
-        const sliderLabel = document.getElementById("sliderValue");
-        const btnClearData = document.getElementById("btnClearData");
-        const btnPrevDate = document.getElementById("btnPrevDate");
-        const btnNextDate = document.getElementById("btnNextDate");
-        
-        const toggleBtn = document.getElementById("btnToggleTimeline");
-        const wrapper = document.getElementById("timelineWrapper");
-        
-        if (toggleBtn && wrapper) {
-            toggleBtn.addEventListener("click", () => {
-                toggleBtn.classList.toggle("open");
-                if (wrapper.style.maxHeight && wrapper.style.maxHeight !== "0px") {
-                    wrapper.style.maxHeight = "0px";
-                } else {
-                    wrapper.style.maxHeight = wrapper.scrollHeight + "px";
-                }
-            });
-        }
-
-        if (slider && sliderLabel) {
-            slider.value = DANGER_THRESHOLD;
-            sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
-
-            slider.addEventListener("input", (e) => {
-                const value = parseInt(e.target.value);
-                DANGER_THRESHOLD = value;
-                sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
-                
-                localStorage.setItem("sound_threshold", value);
-
-                if (value >= 95) {
-                    if (!hasWarnedSensitivity) {
-                        alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!\n이 상태에서는 아주 큰 소리가 아니면 위험 상황을 감지하지 못할 수 있습니다.");
-                        hasWarnedSensitivity = true; 
-                    }
-                } else {
-                    hasWarnedSensitivity = false;
-                }
-            });
-        }
-
-        if (btnClearData) {
-            btnClearData.addEventListener("click", () => {
-                if (confirm("정말로 기록 데이터를 모두 삭제하시겠습니까?")) {
-                    localStorage.removeItem("backsound_logs");
-                    alert("데이터가 초기화되었습니다.");
-                    updateRecordScreen();
-                }
-            });
-        }
-
-        if (btnPrevDate) {
-            btnPrevDate.addEventListener("click", () => {
-                if (selectedDateOffset > -6) {
-                    selectedDateOffset--;
-                    updateRecordScreen();
-                }
-            });
-        }
-
-        if (btnNextDate) {
-            btnNextDate.addEventListener("click", () => {
-                if (selectedDateOffset < 0) {
-                    selectedDateOffset++;
-                    updateRecordScreen();
-                }
-            });
-        }
-    });
 
     // ----------------------------------------------------
-    // 지도 및 위치 관련 로직
+    // [10] 지도 및 위치 추적 로직
     // ----------------------------------------------------
     function initMapSystem() {
         if (!navigator.geolocation) {
