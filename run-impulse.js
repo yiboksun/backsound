@@ -147,5 +147,4 @@ class EdgeImpulseClassifier {
 
         return jsResult;
     }
-    
 }
