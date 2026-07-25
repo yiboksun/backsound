@@ -529,7 +529,10 @@ img, canvas {
     <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
     
     <script>
-    // 변수 선언부
+    // 💡 [핵심] 변수를 최상단에 미리 선언하여 참조 에러 방지
+    let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
+    let SAMPLE_WINDOW = 48000;
+
     let audioContext;
     let analyser;
     let dataArray;
@@ -539,15 +542,25 @@ img, canvas {
     let ctx;
     let audioBuffer = [];
     let isRunning = false;
-    let isStarted = false; // 💡 추가된 시작 플래그
+    let isStarted = false;
 
-    // 1. [교체된 코드] window.onload 이벤트
+    // 초기 화면 로딩
     window.onload = () => {
+        // 시작 전 메인 화면(SOUND, 파형 등)을 강제로 숨김
+        const mainScreenEl = document.getElementById("mainScreen");
+        if (mainScreenEl) {
+            mainScreenEl.style.display = "none";
+        }
+
+        const startGuideEl = document.getElementById("startGuide");
+        if (startGuideEl) {
+            startGuideEl.style.display = "flex";
+        }
+
         const handleStart = () => {
             if (isStarted) return;
             isStarted = true;
 
-            // 이벤트 중복 실행 방지
             window.removeEventListener("click", handleStart);
             window.removeEventListener("touchstart", handleStart);
             
@@ -558,25 +571,23 @@ img, canvas {
         window.addEventListener("touchstart", handleStart);
     };
 
-    // 2. [교체된 코드] enterMain 함수
     async function enterMain() {
         try {
-            // 1) "화면을 터치하면 소리 감지가 시작됩니다" 문구 완전히 숨기기
+            // 1. 안내 문구 레이어 감추기
             const startGuideEl = document.getElementById("startGuide");
             if (startGuideEl) {
                 startGuideEl.style.display = "none";
             }
 
-            // 2) 메인 화면(SOUND, 파형 등) 표시
+            // 2. 메인 화면(SOUND, 파형) 켜기
             const mainScreenEl = document.getElementById("mainScreen");
             if (mainScreenEl) {
                 mainScreenEl.style.display = "flex";
             }
 
-            // 3) 하단 홈 버튼 활성화
             if (typeof btnHome !== 'undefined' && btnHome) btnHome.classList.add("active");
 
-            // 4) 오디오 및 AI 초기화 진행
+            // 3. 마이크 및 오디오 설정
             micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
