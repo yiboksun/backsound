@@ -2,1332 +2,1331 @@
 <html lang="ko">
 
 <head>
-<meta charset="UTF-8" />
-<title>Back Sound</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght=800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta charset="UTF-8" />
+    <title>Back Sound</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght=800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    
 
-
-
-<style>
-/* 화면 전체 및 캔버스, 이미지가 밖으로 나가지 않도록 고정 */
+    <style>
+        /* 화면 전체 및 캔버스, 이미지가 밖으로 나가지 않도록 고정 */
 html, body {
-width: 100%;
-height: 100%;
-margin: 0;
-padding: 0;
-overflow-x: hidden; /* 가로 스크롤 방지 */
-box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
+    box-sizing: border-box;
 }
 
 *, *:before, *:after {
-box-sizing: inherit;
+    box-sizing: inherit;
 }
 
 /* 이미지나 SVG, Canvas가 부모 영역을 넘치지 않게 조절 */
 img, canvas {
-max-width: 100%;
-height: auto;
+    max-width: 100%;
+    height: auto;
 }
 
-body {
-margin: 0;
-background-color: white; 
-color: black;
-font-family: Arial, sans-serif;
-overflow: hidden;
-transition: background-color 0.2s ease; 
-}
+        body {
+            margin: 0;
+            background-color: white; 
+            color: black;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            transition: background-color 0.2s ease; 
+        }
 
-#topNav {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 80px;
-background: white;
-border-bottom: 2px solid #333;
+        #topNav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: white;
+    border-bottom: 2px solid #333;
 
-display: flex;
-align-items: center;
+    display: flex;
+    align-items: center;
 
-padding-left: 20px;
-box-sizing: border-box;
-z-index: 150;
+    padding-left: 20px;
+    box-sizing: border-box;
+    z-index: 150;
 }
 
 .logo{
-width: auto;
-height: 42px;          
-object-fit: contain;
+    width: auto;
+    height: 42px;          
+    object-fit: contain;
 }
 
-.content-screen {
-position: fixed;
-top: 80px;
-left: 0;
-width: 100vw;
-height: calc(100vh - 80px - 75px);
-background-image:url("background.png");
-background-size:cover;
-background-position:center;
-background-repeat:no-repeat;
-box-sizing: border-box;
-}
+        .content-screen {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 80px - 75px);
+            background-image:url("background.png");
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+            box-sizing: border-box;
+        }
 
-#mainScreen {
-display: flex;
-flex-direction: column;
-justify-content: center; 
-align-items: center; 
-z-index: 10;
-}
+        #mainScreen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            z-index: 10;
+        }
 
-#guideScreen {
-display: none;
-overflow-y: auto;
-padding: 40px;
-z-index: 10;
-}
+        #guideScreen {
+            display: none;
+            overflow-y: auto;
+            padding: 40px;
+            z-index: 10;
+        }
 
-.guide-title {
-font-size: 24px;
-font-weight: bold;
-margin-bottom: 20px;
-color: #111827;
-}
+        .guide-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #111827;
+        }
 
-.guide-text {
-font-size: 16px;
-line-height: 1.6;
-color: #374151;
-}
+        .guide-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #374151;
+        }
 
-#recordScreen {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: calc(100vh - 75px);
-background-color: #f9fafb;
-overflow-y: auto;
-padding: 140px 30px 50px 30px;
-box-sizing: border-box;
-z-index: 10;
-}
+        #recordScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 75px);
+            background-color: #f9fafb;
+            overflow-y: auto;
+            padding: 140px 30px 50px 30px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
 
-.stats-card {
-background: white;
-border: 2px solid #333;
-border-radius: 12px;
-padding: 24px;
-margin-bottom: 30px;
-box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-.stats-card h3 { margin: 0 0 10px 0; font-size: 20px; font-weight: bold; }
-.stats-sub { font-size: 16px; color: #666; margin-top: 5px; }
+        .stats-card {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .stats-card h3 { margin: 0 0 10px 0; font-size: 20px; font-weight: bold; }
+        .stats-sub { font-size: 16px; color: #666; margin-top: 5px; }
 
-.chart-container {
-background: white;
-border: 2px solid #333;
-border-radius: 12px;
-padding: 20px;
-margin-bottom: 30px;
-height: 320px;
-}
+        .chart-container {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            height: 320px;
+        }
 
-/* 📋 [새로 추가] 접기/펼치기 토글 버튼 스타일 */
-.timeline-toggle-btn {
-width: 100%;
-background: white;
-border: 2px solid #333;
-border-radius: 12px;
-padding: 20px;
-font-size: 18px;
-font-weight: bold;
-text-align: left;
-cursor: pointer;
-display: flex;
-justify-content: space-between;
-align-items: center;
-box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-margin-bottom: 15px;
-box-sizing: border-box;
-}
-.timeline-toggle-btn::after {
-content: '▼';
-font-size: 20px;
-transition: transform 0.3s ease;
-}
-.timeline-toggle-btn.open::after {
-transform: rotate(180deg);
-}
+        /* 📋 [새로 추가] 접기/펼치기 토글 버튼 스타일 */
+        .timeline-toggle-btn {
+            width: 100%;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .timeline-toggle-btn::after {
+            content: '▼';
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+        .timeline-toggle-btn.open::after {
+            transform: rotate(180deg);
+        }
 
-/* 📋 [새로 추가] 접다 폈다 하는 실시간 콘텐트 박스 */
-.timeline-wrapper {
-max-height: 0;
-overflow: hidden;
-transition: max-height 0.3s ease-out;
-}
+        /* 📋 [새로 추가] 접다 폈다 하는 실시간 콘텐트 박스 */
+        .timeline-wrapper {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
 
-.timeline-list { list-style: none; padding: 0; margin: 0; }
-.timeline-item {
-background: white;
-border: 1px solid #e5e7eb;
-padding: 16px;
-margin-bottom: 10px;
-border-radius: 8px;
-font-size: 16px;
-display: flex;
-justify-content: space-between;
-}
-.timeline-tag { font-weight: bold; color: #ef4444; }
-.timeline-time { color: #9ca3af; }
+        .timeline-list { list-style: none; padding: 0; margin: 0; }
+        .timeline-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .timeline-tag { font-weight: bold; color: #ef4444; }
+        .timeline-time { color: #9ca3af; }
 
-canvas {
-display: block;
-width: 100%;
-height: 250px; 
-}
+        canvas {
+            display: block;
+            width: 100%;
+            height: 250px; 
+        }
 
-#ui {
-margin-top: 20px;
-color: rgb(0, 0, 0);
-text-align: center;
-z-index: 10;
-}
+        #ui {
+            margin-top: 20px;
+            color: rgb(0, 0, 0);
+            text-align: center;
+            z-index: 10;
+        }
 
-#level, #warning, #aiResult {
-font-size: 18px;
-font-weight: bold;
-margin-top: 5px;
-}
+        #level, #warning, #aiResult {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
 
-#warning {
-color: rgb(255, 0, 0);
-}
+        #warning {
+            color: rgb(255, 0, 0);
+        }
 
-#startGuide {
-position: fixed;
-top: 120px;
-left: 0;
-width: 100vw;
-height: calc(100vh - 80px - 75px);
-display: flex;
-justify-content: center;
-align-items: center;
-font-size: 30px;
-font-weight: bold;
-color: black;
-background-color: transparent !important;
-z-index: 50; 
-text-align: center;
-line-height: 1.5;
-}
+        #startGuide {
+            position: fixed;
+            top: 120px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 80px - 75px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: black;
+            background-color: transparent !important;
+            z-index: 50; 
+            text-align: center;
+            line-height: 1.5;
+        }
 
-#bottomNav {
-position: fixed;
-bottom: 0;
-left: 0;
-width: 100%;
-height: 75px;
-background: white;
-border-top: 2px solid #333;
-display: flex;
-justify-content: space-between;
-align-items: center;
-z-index: 100;
-}
+        #bottomNav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 75px;
+            background: white;
+            border-top: 2px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
 
-.navItem {
-flex: 1;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-transform: translateY(0);
-color: #666;
-cursor: pointer;
-}
+        .navItem {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(0);
+            color: #666;
+            cursor: pointer;
+        }
 
-.navItem img {
-width: 40px;
-height: 40px;
-margin-bottom: 4px;
-}
+        .navItem img {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 4px;
+        }
 
-.navItem span {
-font-size: 14px;
-margin-top: 0;
-}
+        .navItem span {
+            font-size: 14px;
+            margin-top: 0;
+        }
 
-.navItem.active {
-color: black;
-font-weight: bold;
-}
+        .navItem.active {
+            color: black;
+            font-weight: bold;
+        }
 
-.navItem img.map-icon {
-width: 40px;
-height: 40px;
-}
+        .navItem img.map-icon {
+            width: 40px;
+            height: 40px;
+        }
 
-#debug {
-display: none;
-}
+        #debug {
+            display: none;
+        }
 
-#mapScreen {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: calc(100vh - 75px);
-background-color: #ffffff;
-z-index: 10;
-}
+        #mapScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 75px);
+            background-color: #ffffff;
+            z-index: 10;
+        }
 
-#map {
-width: 100%;
-height: 100%;
-}
+        #map {
+            width: 100%;
+            height: 100%;
+        }
 
-.zone-alert-toast {
-position: fixed;
-bottom: 240px;
-left: 50%;
-transform: translateX(-50%) translateY(100px);
-background-color: rgba(31, 41, 55, 0.95);
-color: white;
-padding: 16px 28px;
-border-radius: 50px;
-font-size: 20px;
-font-weight: bold;
-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-z-index: 999;
-transition: all 0.4s ease;
-opacity: 0;
-pointer-events: none;
-white-space: nowrap;
-border: 2px solid #f59e0b;
-}
+        .zone-alert-toast {
+            position: fixed;
+            bottom: 240px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: rgba(31, 41, 55, 0.95);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            transition: all 0.4s ease;
+            opacity: 0;
+            pointer-events: none;
+            white-space: nowrap;
+            border: 2px solid #f59e0b;
+        }
 
-input[type="range"] {
--webkit-appearance: none;
-appearance: none;
-width: 100%;
-height: 14px;
-background: #e5e7eb;
-border-radius: 9999px;
-outline: none;
-margin: 20px 0;
-}
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 14px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            outline: none;
+            margin: 20px 0;
+        }
 
-input[type="range"]::-webkit-slider-thumb {
--webkit-appearance: none;
-appearance: none;
-width: 32px; 
-height: 32px;
-background: #ef4444;
-border-radius: 50%;
-cursor: pointer;
-box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-transition: transform 0.1s ease;
-}
-input[type="range"]::-webkit-slider-thumb:active {
-transform: scale(1.2);
-}
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px; 
+            height: 32px;
+            background: #ef4444;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+        }
 
-input[type="range"]::-moz-range-thumb {
-width: 32px;
-height: 32px;
-background: #ef4444;
-border-radius: 50%;
-cursor: pointer;
-box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-border: none;
-}
+        input[type="range"]::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            background: #ef4444;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
 
-.date-controller {
-display: flex;
-justify-content: space-between;
-align-items: center;
-background: #ffffff;
-padding: 15px 20px;
-border-radius: 12px;
-box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-margin-bottom: 20px;
-border: 2px solid #333;
-}
-.date-btn {
-background: #f3f4f6;
-border: none;
-font-size: 16px;
-font-weight: bold;
-padding: 5px 15px;
-border-radius: 8px;
-cursor: pointer;
-color: #374151;
-}
-.date-btn:disabled {
-color: #d1d5db;
-cursor: not-allowed;
-}
-.date-display {
-font-size: 16px;
-font-weight: bold;
-color: #1f2937;
-}
+        .date-controller {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 2px solid #333;
+        }
+        .date-btn {
+            background: #f3f4f6;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #374151;
+        }
+        .date-btn:disabled {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+        .date-display {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+        }
 
-.chart-box {
-position: relative;
-height: 220px;
-margin: 15px 0;
-}
+        .chart-box {
+            position: relative;
+            height: 220px;
+            margin: 15px 0;
+        }
 
-.zone-alert-toast.show {
-transform: translateX(-50%) translateY(0);
-opacity: 1;
-}
-</style>
+        .zone-alert-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BackSound 위험 감지</title>
+    <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BackSound 위험 감지</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-<div id="topNav">
-<img src="logo.png" class="logo" alt="Back Sound Logo">
+    <div id="topNav">
+        <img src="logo.png" class="logo" alt="Back Sound Logo">
+    </div>
+
+    <div id="startGuide" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.45); backdrop-filter: blur(2px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; cursor: pointer; text-align: center; padding: 15px;">
+    <h2 style="font-size: 1.2rem; font-weight: bold; color: #000000; margin-bottom: 6px;">🔊 BackSound</h2>
+    <p style="font-size: 0.95rem; font-weight: 600; color: #000000; margin: 0;">화면을 터치하면 소리 감지가 시작됩니다</p>
 </div>
 
-<div id="startGuide">화면을 터치하면 소리 감지가 시작됩니다</div>
+    <div id="zoneToast" class="zone-alert-toast">위험 구역 진입 안내</div>
 
-<div id="zoneToast" class="zone-alert-toast">위험 구역 진입 안내</div>
-
-    <div id="mainScreen" class="content-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding-top: 30px;">
-    <div id="warning" style="font-size: 2.5rem; font-weight: bold; color: #ef4444; height: 40px; margin-bottom: 10px;"></div>
     <div id="mainScreen" class="content-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding-top: 80px;">
-    <div id="warning" style="font-size: 2.5rem; font-weight: bold; color: #ef4444; height: 40px; margin-bottom: 20px;"></div>
-
-    <canvas id="wave" style="width: 100%; max-width: 500px; height: 180px; margin-bottom: 15px;"></canvas>
-    <canvas id="wave" style="width: 100%; max-width: 500px; height: 180px; margin-bottom: 25px;"></canvas>
-
-    <div id="level" style="font-size: 2rem; font-weight: bold; margin-bottom: 8px;">SOUND: 0</div>
-    <div id="aiResult" style="font-size: 1.1rem; color: #555;">🔍 주변 소리를 탐색 중입니다.</div>
-    <div id="level" style="font-size: 2rem; font-weight: bold; margin-bottom: 12px;">SOUND: 0</div>
-    <div id="aiResult" style="font-size: 1.1rem; color: #555;"> 주변 소리를 탐색 중입니다...</div>
+    <div id="warning" style="font-size: 2rem; font-weight: bold; color: #ef4444; height: 35px; margin-bottom: 15px;"></div>
+    
+    <canvas id="wave" style="width: 100%; max-width: 500px; height: 180px; margin-bottom: 20px;"></canvas>
+    
+    <div id="level" style="font-size: 1.3rem; font-weight: bold; margin-bottom: 8px;">SOUND: 0</div>
+    <div id="aiResult" style="font-size: 1rem; color: #555;"> 주변 소리를 탐색 중입니다.</div>
 </div>
 
-<div id="guideScreen" class="content-screen" style="display: none;">
-<div class="guide-title"> [Back Sound 이용 가이드] </div>
-<div class="guide-text">
-Back Sound는 이어폰 사용 시 주변 소리를 놓치기 쉬운 문제를 해결하기 위해,<br>
-실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는 보행 안전 보조 앱입니다.<br>
-Back Sound는 주변 소리를 지속적으로 분석하여 평소보다 큰 소음이 발생하면 위험 상황으로 판단하고 사용자에게 알려줍니다.<br>
-위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을 인지할 수 있도록 도와줍니다.<br><br>
+    <div id="guideScreen" class="content-screen" style="display: none;">
+        <div class="guide-title"> [Back Sound 이용 가이드] </div>
+        <div class="guide-text">
+            Back Sound는 이어폰 사용 시 주변 소리를 놓치기 쉬운 문제를 해결하기 위해,<br>
+            실시간으로 환경 소리를 분석하고 위험 상황을 사용자에게 즉시 전달하는 보행 안전 보조 앱입니다.<br>
+            Back Sound는 주변 소리를 지속적으로 분석하여 평소보다 큰 소음이 발생하면 위험 상황으로 판단하고 사용자에게 알려줍니다.<br>
+            위험이 감지되면 화면 경고와 진동 알림을 통해 사용자가 빠르게 상황을 인지할 수 있도록 도와줍니다.<br><br>
+            
+            <strong>[주요 기능]</strong><br>
+            1. 실시간 소리 시각화: 주변 소리의 크기와 주파수를 캔버스 파형으로 보여줍니다.<br>
+            2. AI 위험 감지: 인공지능 모델이 자동차 경적과 오토바이 소리를 구별하여 감지합니다.<br>
+            3. 위험 경고 시스템: 위험 소리가 연속 감지되면 화면이 빨갛게 변하며 비프음과 진동이 울립니다.<br><br>
+            
+            <strong>[주의 사항]</strong><br>
+            - 마이크 권한이 반드시 허용되어 있어야 정상 작동합니다.<br>
+            - 배경 소음이 너무 큰 환경에서는 감지 성능이 저하될 수 있습니다.<br>
+            - Android 기기에서는 진동 알림이 함께 제공됩니다.<br><br>
+        </div>
+    </div>
 
-<strong>[주요 기능]</strong><br>
-1. 실시간 소리 시각화: 주변 소리의 크기와 주파수를 캔버스 파형으로 보여줍니다.<br>
-2. AI 위험 감지: 인공지능 모델이 자동차 경적과 오토바이 소리를 구별하여 감지합니다.<br>
-3. 위험 경고 시스템: 위험 소리가 연속 감지되면 화면이 빨갛게 변하며 비프음과 진동이 울립니다.<br><br>
+    <div id="recordScreen" class="content-screen" style="display: none;">
+        <div class="date-controller">
+            <button id="btnPrevDate" class="date-btn">◀</button>
+            <span id="currentDateDisplay" class="date-display">오늘</span>
+            <button id="btnNextDate" class="date-btn" disabled>▶</button>
+        </div>
 
-<strong>[주의 사항]</strong><br>
-- 마이크 권한이 반드시 허용되어 있어야 정상 작동합니다.<br>
-- 배경 소음이 너무 큰 환경에서는 감지 성능이 저하될 수 있습니다.<br>
-- Android 기기에서는 진동 알림이 함께 제공됩니다.<br><br>
-</div>
-</div>
+        <div class="stats-card">
+            <h3>[위험 소리 발생 비중]</h3>
+            <p class="stats-sub">선택한 날짜에 어떤 위험 요소가 많이 발생했는지 확인하세요.</p>
+            <div class="chart-box">
+                <canvas id="ratioChart"></canvas>
+            </div>
+            <div id="statTotal" style="font-weight: bold; font-size: 20px; margin-top: 10px; text-align: center;">총 감지: 0회</div>
+            <div id="statDetails" style="font-size: 16px; color: #666; text-align: center; margin-top: 5px;">차량 접근: 0회 | 큰소리: 0회</div>
+        </div>
 
-<div id="recordScreen" class="content-screen" style="display: none;">
-<div class="date-controller">
-<button id="btnPrevDate" class="date-btn">◀</button>
-<span id="currentDateDisplay" class="date-display">오늘</span>
-<button id="btnNextDate" class="date-btn" disabled>▶</button>
-</div>
+        <div class="chart-container" style="position: relative; width: 100%; height: 220px; margin-top: 15px;">
+            <canvas id="dangerChart"></canvas>
+        </div>
 
-<div class="stats-card">
-<h3>[위험 소리 발생 비중]</h3>
-<p class="stats-sub">선택한 날짜에 어떤 위험 요소가 많이 발생했는지 확인하세요.</p>
-<div class="chart-box">
-<canvas id="ratioChart"></canvas>
-</div>
-<div id="statTotal" style="font-weight: bold; font-size: 20px; margin-top: 10px; text-align: center;">총 감지: 0회</div>
-<div id="statDetails" style="font-size: 16px; color: #666; text-align: center; margin-top: 5px;">차량 접근: 0회 | 큰소리: 0회</div>
-</div>
+        <button id="btnToggleTimeline" class="timeline-toggle-btn" style="margin-top: 15px;">
+             [실시간 타임라인 로그 보기]
+        </button>
+        
+        <div id="timelineWrapper" class="timeline-wrapper">
+            <ul class="timeline-list" id="timelineLog"></ul>
+        </div>
+    </div>
 
-<div class="chart-container" style="position: relative; width: 100%; height: 220px; margin-top: 15px;">
-<canvas id="dangerChart"></canvas>
-</div>
+    <div id="mapScreen" class="content-screen" style="display: none; padding: 0; margin: 0; width: 100%; height: calc(100vh - 120px); position: relative; overflow: hidden;">
+        <div id="map" style="width: 100%; height: 100%;"></div>
+    </div>
 
-<button id="btnToggleTimeline" class="timeline-toggle-btn" style="margin-top: 15px;">
-[실시간 타임라인 로그 보기]
-</button>
+    <div id="infoScreen" class="content-screen" style="display: none; overflow-y: auto; padding: 20px 20px 80px 20px; background-color: #f9fafb;">
+        <div class="stats-card">
+            <h3>[소리 감지 민감도 조절]</h3>
+            <p class="stats-sub">너무 자주 울리면 기준 데시벨(dB)을 높여 둔하게 변경해 보세요.</p>
+            <div style="margin: 20px 0; text-align: center;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666; margin-bottom: 5px; font-weight: bold;">
+                    <span>초민감 (40 dB)</span>
+                    <span>보통 (80 dB)</span>
+                    <span>아주 둔함 (110 dB)</span>
+                </div>
+                <input type="range" id="sensitivitySlider" min="40" max="110" value="80" step="1" style="width: 100%;">
+                <div id="sliderValue" style="font-size: 18px; font-weight: bold; margin-top: 5px; color: #ef4444;">위험 감지 기준: 80 dB</div>
+            </div>
+        </div>
 
-<div id="timelineWrapper" class="timeline-wrapper">
-<ul class="timeline-list" id="timelineLog"></ul>
-</div>
-</div>
+        <div class="stats-card" style="margin-top: 20px;">
+            <h3>[애플리케이션 정보]</h3>
+            <div class="guide-text" style="font-size: 18px; margin-top: 10px; line-height: 1.6;">
+                • <strong>앱 이름:</strong> Back Sound (백사운드)<br>
+                • <strong>버전:</strong> v1.1.0 (민감도&로그 커스텀)<br>
+                • <strong>기능:</strong> 실시간 환경음 분석 및 보행자 위험 알림 보조<br><br>
+                
+                <button id="btnClearData" style="width: 100%; padding: 15px; background-color: #374151; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;">
+                    전체 저장 데이터 초기화
+                </button>
+            </div>
+        </div>
+    </div>
 
-<div id="mapScreen" class="content-screen" style="display: none; padding: 0; margin: 0; width: 100%; height: calc(100vh - 120px); position: relative; overflow: hidden;">
-<div id="map" style="width: 100%; height: 100%;"></div>
-</div>
+    <div id="bottomNav">
+        <div class="navItem" id="btnRecord">
+            <img src="기록-removebg-preview.png" alt="기록">
+        </div>
+        <div class="navItem" id="btnGuide">
+            <img src="가이드-removebg-preview.png" alt="가이드">
+        </div>
+        <div class="navItem active" id="btnHome">
+            <img src="홈-removebg-preview.png" alt="홈">
+        </div>
+        <div class="navItem" id="btnMap">
+            <img src="지도-removebg-preview.png" class="map-icon" alt="지도">
+        </div>
+        <div class="navItem" id="btnInfo">
+            <img src="내_정보-removebg-preview.png" alt="내 정보">
+        </div>
+    </div>
 
-<div id="infoScreen" class="content-screen" style="display: none; overflow-y: auto; padding: 20px 20px 80px 20px; background-color: #f9fafb;">
-<div class="stats-card">
-<h3>[소리 감지 민감도 조절]</h3>
-<p class="stats-sub">너무 자주 울리면 기준 데시벨(dB)을 높여 둔하게 변경해 보세요.</p>
-<div style="margin: 20px 0; text-align: center;">
-<div style="display: flex; justify-content: space-between; font-size: 14px; color: #666; margin-bottom: 5px; font-weight: bold;">
-<span>초민감 (40 dB)</span>
-<span>보통 (80 dB)</span>
-<span>아주 둔함 (110 dB)</span>
-</div>
-<input type="range" id="sensitivitySlider" min="40" max="110" value="80" step="1" style="width: 100%;">
-<div id="sliderValue" style="font-size: 18px; font-weight: bold; margin-top: 5px; color: #ef4444;">위험 감지 기준: 80 dB</div>
-</div>
-</div>
-
-<div class="stats-card" style="margin-top: 20px;">
-<h3>[애플리케이션 정보]</h3>
-<div class="guide-text" style="font-size: 18px; margin-top: 10px; line-height: 1.6;">
-• <strong>앱 이름:</strong> Back Sound (백사운드)<br>
-• <strong>버전:</strong> v1.1.0 (민감도&로그 커스텀)<br>
-• <strong>기능:</strong> 실시간 환경음 분석 및 보행자 위험 알림 보조<br><br>
-
-<button id="btnClearData" style="width: 100%; padding: 15px; background-color: #374151; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer;">
-전체 저장 데이터 초기화
-</button>
-</div>
-</div>
-</div>
-
-<div id="bottomNav">
-<div class="navItem" id="btnRecord">
-<img src="기록-removebg-preview.png" alt="기록">
-</div>
-<div class="navItem" id="btnGuide">
-<img src="가이드-removebg-preview.png" alt="가이드">
-</div>
-<div class="navItem active" id="btnHome">
-<img src="홈-removebg-preview.png" alt="홈">
-</div>
-<div class="navItem" id="btnMap">
-<img src="지도-removebg-preview.png" class="map-icon" alt="지도">
-</div>
-<div class="navItem" id="btnInfo">
-<img src="내_정보-removebg-preview.png" alt="내 정보">
-</div>
-</div>
-
-<div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
+    <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
 </body>
-
-<script>
-// ----------------------------------------------------
-// [1] 전역 변수 선언 및 초기화
-// ----------------------------------------------------
-let hornCounter = 0;
-let bikeCounter = 0;
-let isBeepCooldown = false;
-let lastSavedTime = 0;
-let selectedDateOffset = 0;
-let hasWarnedSensitivity = false;
-
-let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
-let SAMPLE_WINDOW = 48000;
-
-let audioContext;
-let analyser;
-let dataArray;
-let micStream;
-let aiRunning = false;
-let canvas;
-let ctx;
-let audioBuffer = [];
-let isRunning = false;
-let isStarted = false;
-
-// 차트 및 지도 관련 변수
-let dangerChartInstance = null;
-let ratioChartInstance = null;
-let isMapInitialized = false;
-let mapInstance = null;
-let userMarker = null;
-let allDangerZones = [];
-let insideZoneName = null;
-
-// DOM 요소 캐싱 변수
-let mainScreen, guideScreen, recordScreen, mapScreen, infoScreen, startGuide;
-let btnHome, btnGuide, btnRecord, btnMap, btnInfo;
-
-// ----------------------------------------------------
-// [2] 초기 화면 로딩 및 시작 이벤트
-// ----------------------------------------------------
-window.onload = () => {
-mainScreen = document.getElementById("mainScreen");
-guideScreen = document.getElementById("guideScreen");
-recordScreen = document.getElementById("recordScreen");
-mapScreen = document.getElementById("mapScreen");
-infoScreen = document.getElementById("infoScreen");
-startGuide = document.getElementById("startGuide");
-
-btnHome = document.getElementById("btnHome");
-btnGuide = document.getElementById("btnGuide");
-btnRecord = document.getElementById("btnRecord");
-btnMap = document.getElementById("btnMap");
-btnInfo = document.getElementById("btnInfo");
-
-hideAllScreens();
-if (startGuide) startGuide.style.display = "flex";
-
-const handleStart = () => {
-if (isStarted) return;
-isStarted = true;
-
-window.removeEventListener("click", handleStart);
-window.removeEventListener("touchstart", handleStart);
-
-enterMain();
-};
-
-window.addEventListener("click", handleStart);
-window.addEventListener("touchstart", handleStart);
-};
-
-// ----------------------------------------------------
-// [3] 메인 화면 진입 및 마이크 설정
-// ----------------------------------------------------
-async function enterMain() {
-try {
-if (startGuide) startGuide.style.display = "none";
-
-hideAllScreens();
-if (mainScreen) mainScreen.style.display = "flex";
-if (btnHome) btnHome.classList.add("active");
-
-micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-audioContext = new AudioContextClass();
-if (audioContext.state === 'suspended') {
-await audioContext.resume();
-}
-
-analyser = audioContext.createAnalyser();
-analyser.fftSize = 256;
-
-const mic = audioContext.createMediaStreamSource(micStream);
-mic.connect(analyser);
-
-const processor = audioContext.createScriptProcessor(4096, 1, 1);
-mic.connect(processor);
-processor.connect(audioContext.destination);
-
-processor.onaudioprocess = function(e) {
-const input = e.inputBuffer.getChannelData(0);
-for (let i = 0; i < input.length; i++) {
-let s = Math.max(-1, Math.min(1, input[i]));
-audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
-}
-if (audioBuffer.length > SAMPLE_WINDOW * 2) {
-audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
-}
-};
-
-dataArray = new Uint8Array(analyser.frequencyBinCount);
-canvas = document.getElementById("wave");
-if (canvas) ctx = canvas.getContext("2d");
-
-resizeCanvas();
-
-isRunning = true;
-drawLoop();
-aiLoop();
-
-} catch (e) {
-console.error(e);
-alert("마이크 연결 오류: " + e.message);
-}
-}
-
-// ----------------------------------------------------
-// [4] 화면 전환 및 캔버스 조절
-// ----------------------------------------------------
-function hideAllScreens() {
-if (mainScreen) mainScreen.style.display = "none";
-if (guideScreen) guideScreen.style.display = "none";
-if (recordScreen) recordScreen.style.display = "none";
-if (mapScreen) mapScreen.style.display = "none";
-if (infoScreen) infoScreen.style.display = "none";
-
-if (btnHome) btnHome.classList.remove("active");
-if (btnGuide) btnGuide.classList.remove("active");
-if (btnRecord) btnRecord.classList.remove("active");
-if (btnMap) btnMap.classList.remove("active");
-if (btnInfo) btnInfo.classList.remove("active");
-
-document.body.style.backgroundColor = "white";
-}
-
-function resizeCanvas() {
-if (!canvas) return;
-const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
-canvas.width = parentWidth > 0 ? parentWidth : window.innerWidth;
-canvas.height = 200;
-}
-
-window.addEventListener("resize", resizeCanvas);
-
-// ----------------------------------------------------
-// [5] DOM 이벤트 연결
-// ----------------------------------------------------
-document.addEventListener("DOMContentLoaded", () => {
-requestAppPermissions();
-
-const btnHomeEl = document.getElementById("btnHome");
-const btnGuideEl = document.getElementById("btnGuide");
-const btnRecordEl = document.getElementById("btnRecord");
-const btnMapEl = document.getElementById("btnMap");
-const btnInfoEl = document.getElementById("btnInfo");
-
-if (btnHomeEl) {
-btnHomeEl.addEventListener("click", () => {
-if (!isStarted) return;
-hideAllScreens();
-if (mainScreen) mainScreen.style.display = "flex";
-btnHomeEl.classList.add("active");
-setTimeout(resizeCanvas, 50);
-});
-}
-
-if (btnGuideEl) {
-btnGuideEl.addEventListener("click", () => {
-if (!isStarted) return;
-hideAllScreens();
-if (guideScreen) guideScreen.style.display = "block";
-btnGuideEl.classList.add("active");
-});
-}
-
-if (btnRecordEl) {
-btnRecordEl.addEventListener("click", () => {
-if (!isStarted) return;
-hideAllScreens();
-if (recordScreen) recordScreen.style.display = "block";
-btnRecordEl.classList.add("active");
-selectedDateOffset = 0; 
-
-const toggleBtn = document.getElementById("btnToggleTimeline");
-const wrapper = document.getElementById("timelineWrapper");
-if (toggleBtn && wrapper) {
-toggleBtn.classList.remove("open");
-wrapper.style.maxHeight = "0px";
-}
-updateRecordScreen();
-});
-}
-
-if (btnMapEl) {
-btnMapEl.addEventListener("click", () => {
-if (!isStarted) return;
-hideAllScreens();
-if (mapScreen) mapScreen.style.display = "block";
-btnMapEl.classList.add("active");
-
-// 지도 중복 생성을 막고 재렌더링만 수행
-if (!isMapInitialized) {
-initMapSystem();
-isMapInitialized = true;
-} else if (mapInstance) {
-setTimeout(() => { mapInstance.invalidateSize(); }, 200);
-}
-});
-}
-
-if (btnInfoEl) {
-btnInfoEl.addEventListener("click", () => {
-if (!isStarted) return;
-hideAllScreens();
-if (infoScreen) infoScreen.style.display = "block";
-btnInfoEl.classList.add("active");
-});
-}
-
-const slider = document.getElementById("sensitivitySlider");
-const sliderLabel = document.getElementById("sliderValue");
-const btnClearData = document.getElementById("btnClearData");
-const btnPrevDate = document.getElementById("btnPrevDate");
-const btnNextDate = document.getElementById("btnNextDate");
-const toggleBtn = document.getElementById("btnToggleTimeline");
-const wrapper = document.getElementById("timelineWrapper");
-
-if (toggleBtn && wrapper) {
-toggleBtn.addEventListener("click", () => {
-toggleBtn.classList.toggle("open");
-if (wrapper.style.maxHeight && wrapper.style.maxHeight !== "0px") {
-wrapper.style.maxHeight = "0px";
-} else {
-wrapper.style.maxHeight = wrapper.scrollHeight + "px";
-}
-});
-}
-
-if (slider && sliderLabel) {
-slider.value = DANGER_THRESHOLD;
-sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
-
-slider.addEventListener("input", (e) => {
-const value = parseInt(e.target.value);
-DANGER_THRESHOLD = value;
-sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
-localStorage.setItem("sound_threshold", value);
-
-if (value >= 95) {
-if (!hasWarnedSensitivity) {
-alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!");
-hasWarnedSensitivity = true; 
-}
-} else {
-hasWarnedSensitivity = false;
-}
-});
-}
-
-if (btnClearData) {
-btnClearData.addEventListener("click", () => {
-if (confirm("정말로 기록 데이터를 모두 삭제하시겠습니까?")) {
-localStorage.removeItem("backsound_logs");
-alert("데이터가 초기화되었습니다.");
-updateRecordScreen();
-}
-});
-}
-
-if (btnPrevDate) {
-btnPrevDate.addEventListener("click", () => {
-if (selectedDateOffset > -6) {
-selectedDateOffset--;
-updateRecordScreen();
-}
-});
-}
-
-if (btnNextDate) {
-btnNextDate.addEventListener("click", () => {
-if (selectedDateOffset < 0) {
-selectedDateOffset++;
-updateRecordScreen();
-}
-});
-}
-});
-
-// ----------------------------------------------------
-// [6] 권한 요청 및 로깅
-// ----------------------------------------------------
-async function requestAppPermissions() {
-try {
-const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-stream.getTracks().forEach(track => track.stop());
-} catch (err) {
-console.error("마이크 권한 거부됨:", err);
-}
-
-if (navigator.geolocation) {
-navigator.geolocation.getCurrentPosition(
-() => {},
-(err) => console.error("위치 권한 거부됨:", err.message),
-{ enableHighAccuracy: true, timeout: 5000 }
-);
-}
-}
-
-// ----------------------------------------------------
-// [7] 데이터 기록 관리
-// ----------------------------------------------------
-function getTargetDateString(offset) {
-const d = new Date();
-d.setDate(d.getDate() + offset);
-return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function saveDangerLog(type) {
-const now = new Date();
-if (now.getTime() - lastSavedTime < 2000) return;
-lastSavedTime = now.getTime();
-
-const todayStr = getTargetDateString(0);
-
-const logEntry = {
-date: todayStr, 
-time: now.toTimeString().split(' ')[0].substring(0, 5), 
-hour: now.getHours(),
-type: type
-};
-
-let currentLogs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
-currentLogs.push(logEntry);
-
-const boundaryDate = getTargetDateString(-7);
-currentLogs = currentLogs.filter(log => log.date >= boundaryDate);
-
-localStorage.setItem("backsound_logs", JSON.stringify(currentLogs));
-}
-
-function updateRecordScreen() {
-const targetDateStr = getTargetDateString(selectedDateOffset);
-const displayTarget = document.getElementById("currentDateDisplay");
-
-if (displayTarget) {
-if (selectedDateOffset === 0) {
-displayTarget.innerText = `${targetDateStr} (오늘)`;
-const btnNext = document.getElementById("btnNextDate");
-if (btnNext) btnNext.disabled = true; 
-} else {
-displayTarget.innerText = targetDateStr;
-const btnNext = document.getElementById("btnNextDate");
-if (btnNext) btnNext.disabled = false;
-}
-}
-
-const btnPrev = document.getElementById("btnPrevDate");
-if (btnPrev) {
-btnPrev.disabled = (selectedDateOffset <= -6);
-}
-
-const logs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
-const targetLogs = logs.filter(log => log.date === targetDateStr);
-
-const hornCount = targetLogs.filter(log => log.type === "차량 접근").length;
-const loudCount = targetLogs.filter(log => log.type === "데시벨 초과 큰 소리").length;
-const totalCount = targetLogs.length;
-
-const totalEl = document.getElementById("statTotal");
-const detailsEl = document.getElementById("statDetails");
-if (totalEl) totalEl.innerText = `${selectedDateOffset === 0 ? '오늘' : '선택일'} 감지된 위험: 총 ${totalCount}회`;
-if (detailsEl) detailsEl.innerText = `차량 접근: ${hornCount}회 | 큰소리: ${loudCount}회`;
-
-const timelineLog = document.getElementById("timelineLog");
-if (timelineLog) {
-timelineLog.innerHTML = "";
-[...targetLogs].reverse().slice(0, 50).forEach(log => {
-const li = document.createElement("li");
-li.className = "timeline-item";
-li.innerHTML = `
-                   <span class="timeline-tag">[${log.type}] 위험 감지!</span>
-                   <span class="timeline-time">${log.time}</span>
-               `;
-timelineLog.appendChild(li);
-});
-}
-
-const hourlyData = new Array(24).fill(0);
-targetLogs.forEach(log => {
-if (log.hour >= 0 && log.hour < 24) {
-hourlyData[log.hour]++;
-}
-});
-
-const chartEl = document.getElementById('dangerChart');
-if (chartEl && typeof Chart !== 'undefined') {
-const ctxChart = chartEl.getContext('2d');
-if (dangerChartInstance) dangerChartInstance.destroy();
-
-dangerChartInstance = new Chart(ctxChart, {
-type: 'line',
-data: {
-labels: Array.from({length: 24}, (_, i) => `${i}시`),
-datasets: [{
-label: '시간대별 위험 감지 횟수',
-data: hourlyData,
-borderColor: '#ef4444',
-backgroundColor: 'rgba(239, 68, 68, 0.1)',
-borderWidth: 3,
-tension: 0.3,
-pointBackgroundColor: '#ef4444'
-}]
-},
-options: {
-responsive: true,
-maintainAspectRatio: false,
-scales: {
-y: { beginAtZero: true },
-x: { ticks: { maxTicksLimit: 8 } }
-},
-plugins: { legend: { display: false } }
-}
-});
-}
-
-const ratioChartEl = document.getElementById('ratioChart');
-if (ratioChartEl && typeof Chart !== 'undefined') {
-const ctxRatio = ratioChartEl.getContext('2d');
-if (ratioChartInstance) ratioChartInstance.destroy();
-
-const hasData = totalCount > 0;
-const chartData = hasData ? [hornCount, loudCount] : [0, 1];
-const chartColors = hasData ? ['#ef4444', '#3b82f6'] : ['#e5e7eb'];
-const chartLabels = hasData ? ['차량 접근', '데시벨 초과 큰 소리'] : ['위험 데이터 없음'];
-
-ratioChartInstance = new Chart(ctxRatio, {
-type: 'doughnut',
-data: {
-labels: chartLabels,
-datasets: [{
-data: chartData,
-backgroundColor: chartColors,
-borderWidth: hasData ? 2 : 0
-}]
-},
-options: {
-responsive: true,
-maintainAspectRatio: false,
-plugins: {
-legend: { position: 'bottom' }
-},
-cutout: '65%' 
-}
-});
-}
-}
-
-// ----------------------------------------------------
-// [8] AI 모델 분석 루프 (오류 없이 예외 처리 완료)
-// ----------------------------------------------------
-function aiLoop() {
-if (!isRunning || aiRunning) {
-setTimeout(aiLoop, 250);
-return;
-}
-
-const aiResultEl = document.getElementById("aiResult");
-const warningEl = document.getElementById("warning");
-
-// AI 분류기가 아직 로드되지 않았을 경우의 안전장치
-if (!window.classifier) {
-if (aiResultEl && audioBuffer.length >= SAMPLE_WINDOW) {
-aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
-}
-setTimeout(aiLoop, 500);
-return;
-}
-
-if (audioBuffer.length < SAMPLE_WINDOW) {
-if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
-aiResultEl.innerText = "주변 소리 분석 준비 중...";
-}
-setTimeout(aiLoop, 250);
-return;
-}
-
-aiRunning = true;
-
-let currentVolume = 0;
-if (dataArray) {
-let sum = 0;
-for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-currentVolume = sum / dataArray.length;
-}
-
-if (currentVolume < 45) { 
-if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
-if (mainScreen && mainScreen.style.display !== "none") {
-document.body.style.backgroundColor = "white";
-}
-if (warningEl) warningEl.innerText = "";
-
-hornCounter = 0;
-bikeCounter = 0;
-
-aiRunning = false;
-setTimeout(aiLoop, 250);
-return;
-}
-
-const inputSlice = audioBuffer.slice(-SAMPLE_WINDOW);
-const input = new Float32Array(inputSlice);
-
-try {
-const result = window.classifier.classify(input);
-
-if (result && result.results) {
-let hornScore = 0;
-let bikeScore = 0;
-
-result.results.forEach(r => {
-const label = r.label.toLowerCase();
-if (label === "car horn" || label === "car_horn" || label === "car born") {
-hornScore = r.value;
-} else if (label === "motorcycle") {
-bikeScore = r.value;
-}
-});
-
-if (hornScore >= 0.8) {
-hornCounter++;
-bikeCounter = 0;
-} else if (bikeScore >= 0.8) {
-bikeCounter++;
-hornCounter = 0;
-} else {
-hornCounter = 0;
-bikeCounter = 0;
-}
-
-if (hornCounter >= 2 || bikeCounter >= 2) {
-if (aiResultEl) aiResultEl.innerText = "주변에 차량이 접근하고 있습니다!";
-document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
-if (warningEl) warningEl.innerText = "위험";
-
-triggerAlert();
-saveDangerLog("차량 접근");
-} else {
-if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
-if (mainScreen && mainScreen.style.display !== "none") {
-document.body.style.backgroundColor = "white";
-}
-if (warningEl) warningEl.innerText = "";
-}
-}
-} catch(err) {
-console.error("AI classification error:", err);
-} finally {
-aiRunning = false;
-setTimeout(aiLoop, 250);
-}
-}
-
-// ----------------------------------------------------
-// [9] 알림 및 파형(Visualizer) 그리기
-// ----------------------------------------------------
-function triggerAlert() {
-if (!isBeepCooldown) {
-playBeep();
-if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
-isBeepCooldown = true;
-setTimeout(() => { isBeepCooldown = false; }, 1000); 
-}
-}
-
-function playBeep() {
-if (!audioContext) return;
-try {
-const oscillator = audioContext.createOscillator();
-const gainNode = audioContext.createGain();
-
-oscillator.connect(gainNode);
-gainNode.connect(audioContext.destination);
-
-oscillator.frequency.value = 1000;
-oscillator.type = "sine";
-
-gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-oscillator.start();
-oscillator.stop(audioContext.currentTime + 0.2);
-} catch (e) {
-console.error(e);
-}
-}
-
-function drawVisualizer() {
-if (!ctx || !canvas || !dataArray) return;
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-const barWidth = (canvas.width / dataArray.length);
-let x = 0;
-
-for (let i = 0; i < dataArray.length; i++) {
-const barHeight = (dataArray[i] / 255) * canvas.height;
-const y = (canvas.height - barHeight) / 2;
-
-// 파형 색상: 검은색
-ctx.fillStyle = "#000000";
-ctx.fillRect(x, y, barWidth - 1, barHeight);
-x += barWidth;
-}
-}
-
-function drawLoop() {
-requestAnimationFrame(drawLoop);
-
-if (!isStarted || !isRunning || !analyser || !dataArray) return;
-
-analyser.getByteFrequencyData(dataArray);
-
-drawVisualizer();
-
-let sum = 0;
-for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-const avg = sum / dataArray.length;
-const decibel = Math.round(avg * 0.8 + 30); // 데시벨 계산 값
-
-const levelEl = document.getElementById("level");
-const warningEl = document.getElementById("warning");
-const aiResultEl = document.getElementById("aiResult");
-
-// ★ dB 글자 완전히 삭제하고 숫자만 표기! (예: SOUND: 45)
-if (levelEl) levelEl.innerText = "SOUND: " + decibel;
-
-if (decibel > DANGER_THRESHOLD) {
-document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
-if (warningEl) warningEl.innerText = "위험";
-if (aiResultEl) aiResultEl.innerText = "큰 소리 감지!"; 
-triggerAlert();
-saveDangerLog("데시벨 초과 큰 소리"); 
-} else {
-if (hornCounter < 2 && bikeCounter < 2) {
-if (mainScreen && mainScreen.style.display !== "none") {
-document.body.style.backgroundColor = "white";
-}
-if (warningEl) warningEl.innerText = "";
-if (decibel >= 45 && aiResultEl) {
-aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
-}
-}
-}
-}
-
-// ----------------------------------------------------
-// [10] 지도 및 위치 추적 로직
-// ----------------------------------------------------
-function initMapSystem() {
-if (!navigator.geolocation) {
-alert("이 브라우저는 위치 추적을 지원하지 않습니다.");
-return;
-}
-
-if (typeof L !== 'undefined' && !mapInstance) {
-mapInstance = L.map('map').setView([37.4840, 126.7825], 16);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '© OpenStreetMap contributors'
-}).addTo(mapInstance);
-}
-
-fetch('danger_zones.json')
-.then(response => response.json())
-.then(data => {
-allDangerZones = data;
-startTracking();
-})
-.catch(error => {
-console.error("danger_zones.json 로드 실패.", error);
-});
-}
-
-function startTracking() {
-navigator.geolocation.watchPosition(onLocationSuccess, onLocationError, {
-enableHighAccuracy: true,
-maximumAge: 0,
-timeout: 10000
-});
-}
-
-function onLocationSuccess(position) {
-const lat = position.coords.latitude;
-const lng = position.coords.longitude;
-
-if (typeof L !== 'undefined' && mapInstance) {
-if (!userMarker) {
-userMarker = L.circleMarker([lat, lng], {
-radius: 8,
-color: '#3b82f6', 
-fillColor: '#3b82f6',
-fillOpacity: 1
-}).addTo(mapInstance).bindPopup("현재 내 위치");
-
-mapInstance.setView([lat, lng], 16);
-drawNearbyZones(lat, lng);
-} else {
-userMarker.setLatLng([lat, lng]);
-}
-}
-
-checkDangerZoneDistance(lat, lng);
-}
-
-function onLocationError(error) {
-console.error("GPS 위치 추적 실패:", error.message);
-}
-
-function drawNearbyZones(userLat, userLng) {
-if (typeof L === 'undefined' || !mapInstance) return;
-
-allDangerZones.forEach(zone => {
-const zoneLat = parseFloat(zone["위도"]);
-const zoneLng = parseFloat(zone["경도"]);
-const zoneName = zone["대상시설명"] || "어린이 보호구역";
-const zoneRadius = 50; 
-
-if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
-const distance = getDistance(userLat, userLng, zoneLat, zoneLng);
-if (distance <= 3000) {
-L.circle([zoneLat, zoneLng], {
-color: '#ef4444',
-fillColor: '#ef4444',
-fillOpacity: 0.25,
-radius: zoneRadius
-}).addTo(mapInstance).bindPopup(`<b>${zoneName}</b>`);
-}
-}
-});
-}
-
-function checkDangerZoneDistance(userLat, userLng) {
-let currentActiveZone = null;
-
-allDangerZones.forEach(zone => {
-const zoneLat = parseFloat(zone["위도"]);
-const zoneLng = parseFloat(zone["경도"]);
-const zoneName = zone["대상시설명"] || "어린이 보호구역";
-const zoneRadius = 50;
-
-if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
-const distance = getDistance(userLat, userLng, zoneLat, zoneLng);
-if (distance <= zoneRadius) {
-currentActiveZone = {
-name: zoneName,
-msg: `어린이 보호구역[${zoneName}] 진입! 차량 진입에 유의하세요.`
-};
-}
-}
-});
-
-const toast = document.getElementById("zoneToast");
-if (!toast) return;
-
-if (currentActiveZone) {
-if (insideZoneName !== currentActiveZone.name) {
-insideZoneName = currentActiveZone.name;
-toast.innerText = currentActiveZone.msg;
-toast.classList.add("show");
-if (navigator.vibrate) navigator.vibrate(100);
-}
-} else {
-if (insideZoneName !== null) {
-insideZoneName = null;
-toast.classList.remove("show");
-}
-}
-}
-
-function getDistance(lat1, lng1, lat2, lng2) {
-const R = 6371000; 
-const dLat = (lat2 - lat1) * Math.PI / 180;
-const dLng = (lng2 - lng1) * Math.PI / 180;
-const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-Math.sin(dLng/2) * Math.sin(dLng/2);
-const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-return R * c; 
-}
+    
+    <script>
+    // ----------------------------------------------------
+    // [1] 전역 변수 선언 및 초기화
+    // ----------------------------------------------------
+    let hornCounter = 0;
+    let bikeCounter = 0;
+    let isBeepCooldown = false;
+    let lastSavedTime = 0;
+    let selectedDateOffset = 0;
+    let hasWarnedSensitivity = false;
+
+    let DANGER_THRESHOLD = parseInt(localStorage.getItem("sound_threshold")) || 80;
+    let SAMPLE_WINDOW = 48000;
+
+    let audioContext;
+    let analyser;
+    let dataArray;
+    let micStream;
+    let aiRunning = false;
+    let canvas;
+    let ctx;
+    let audioBuffer = [];
+    let isRunning = false;
+    let isStarted = false;
+
+    // 차트 및 지도 관련 변수
+    let dangerChartInstance = null;
+    let ratioChartInstance = null;
+    let isMapInitialized = false;
+    let mapInstance = null;
+    let userMarker = null;
+    let allDangerZones = [];
+    let insideZoneName = null;
+
+    // DOM 요소 캐싱 변수
+    let mainScreen, guideScreen, recordScreen, mapScreen, infoScreen, startGuide;
+    let btnHome, btnGuide, btnRecord, btnMap, btnInfo;
+
+    // ----------------------------------------------------
+    // [2] 초기 화면 로딩 및 시작 이벤트
+    // ----------------------------------------------------
+    window.onload = () => {
+        mainScreen = document.getElementById("mainScreen");
+        guideScreen = document.getElementById("guideScreen");
+        recordScreen = document.getElementById("recordScreen");
+        mapScreen = document.getElementById("mapScreen");
+        infoScreen = document.getElementById("infoScreen");
+        startGuide = document.getElementById("startGuide");
+
+        btnHome = document.getElementById("btnHome");
+        btnGuide = document.getElementById("btnGuide");
+        btnRecord = document.getElementById("btnRecord");
+        btnMap = document.getElementById("btnMap");
+        btnInfo = document.getElementById("btnInfo");
+
+        hideAllScreens();
+        if (startGuide) startGuide.style.display = "flex";
+
+        const handleStart = () => {
+            if (isStarted) return;
+            isStarted = true;
+
+            window.removeEventListener("click", handleStart);
+            window.removeEventListener("touchstart", handleStart);
+            
+            enterMain();
+        };
+
+        window.addEventListener("click", handleStart);
+        window.addEventListener("touchstart", handleStart);
+    };
+
+    // ----------------------------------------------------
+    // [3] 메인 화면 진입 및 마이크 설정
+    // ----------------------------------------------------
+    async function enterMain() {
+        try {
+            if (startGuide) startGuide.style.display = "none";
+            
+            hideAllScreens();
+            if (mainScreen) mainScreen.style.display = "flex";
+            if (btnHome) btnHome.classList.add("active");
+
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContextClass();
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+
+            const mic = audioContext.createMediaStreamSource(micStream);
+            mic.connect(analyser);
+
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+            mic.connect(processor);
+            processor.connect(audioContext.destination);
+
+            processor.onaudioprocess = function(e) {
+                const input = e.inputBuffer.getChannelData(0);
+                for (let i = 0; i < input.length; i++) {
+                    let s = Math.max(-1, Math.min(1, input[i]));
+                    audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
+                }
+                if (audioBuffer.length > SAMPLE_WINDOW * 2) {
+                    audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
+                }
+            };
+
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            canvas = document.getElementById("wave");
+            if (canvas) ctx = canvas.getContext("2d");
+            
+            resizeCanvas();
+
+            isRunning = true;
+            drawLoop();
+            aiLoop();
+
+        } catch (e) {
+            console.error(e);
+            alert("마이크 연결 오류: " + e.message);
+        }
+    }
+
+    // ----------------------------------------------------
+    // [4] 화면 전환 및 캔버스 조절
+    // ----------------------------------------------------
+    function hideAllScreens() {
+        if (mainScreen) mainScreen.style.display = "none";
+        if (guideScreen) guideScreen.style.display = "none";
+        if (recordScreen) recordScreen.style.display = "none";
+        if (mapScreen) mapScreen.style.display = "none";
+        if (infoScreen) infoScreen.style.display = "none";
+        
+        if (btnHome) btnHome.classList.remove("active");
+        if (btnGuide) btnGuide.classList.remove("active");
+        if (btnRecord) btnRecord.classList.remove("active");
+        if (btnMap) btnMap.classList.remove("active");
+        if (btnInfo) btnInfo.classList.remove("active");
+        
+        document.body.style.backgroundColor = "white";
+    }
+
+    function resizeCanvas() {
+        if (!canvas) return;
+        const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+        canvas.width = parentWidth > 0 ? parentWidth : window.innerWidth;
+        canvas.height = 200;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    // ----------------------------------------------------
+    // [5] DOM 이벤트 연결
+    // ----------------------------------------------------
+    document.addEventListener("DOMContentLoaded", () => {
+        requestAppPermissions();
+
+        const btnHomeEl = document.getElementById("btnHome");
+        const btnGuideEl = document.getElementById("btnGuide");
+        const btnRecordEl = document.getElementById("btnRecord");
+        const btnMapEl = document.getElementById("btnMap");
+        const btnInfoEl = document.getElementById("btnInfo");
+
+        if (btnHomeEl) {
+            btnHomeEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (mainScreen) mainScreen.style.display = "flex";
+                btnHomeEl.classList.add("active");
+                setTimeout(resizeCanvas, 50);
+            });
+        }
+
+        if (btnGuideEl) {
+            btnGuideEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (guideScreen) guideScreen.style.display = "block";
+                btnGuideEl.classList.add("active");
+            });
+        }
+
+        if (btnRecordEl) {
+            btnRecordEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (recordScreen) recordScreen.style.display = "block";
+                btnRecordEl.classList.add("active");
+                selectedDateOffset = 0; 
+                
+                const toggleBtn = document.getElementById("btnToggleTimeline");
+                const wrapper = document.getElementById("timelineWrapper");
+                if (toggleBtn && wrapper) {
+                    toggleBtn.classList.remove("open");
+                    wrapper.style.maxHeight = "0px";
+                }
+                updateRecordScreen();
+            });
+        }
+
+        if (btnMapEl) {
+            btnMapEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (mapScreen) mapScreen.style.display = "block";
+                btnMapEl.classList.add("active");
+                
+                // 지도 중복 생성을 막고 재렌더링만 수행
+                if (!isMapInitialized) {
+                    initMapSystem();
+                    isMapInitialized = true;
+                } else if (mapInstance) {
+                    setTimeout(() => { mapInstance.invalidateSize(); }, 200);
+                }
+            });
+        }
+
+        if (btnInfoEl) {
+            btnInfoEl.addEventListener("click", () => {
+                if (!isStarted) return;
+                hideAllScreens();
+                if (infoScreen) infoScreen.style.display = "block";
+                btnInfoEl.classList.add("active");
+            });
+        }
+
+        const slider = document.getElementById("sensitivitySlider");
+        const sliderLabel = document.getElementById("sliderValue");
+        const btnClearData = document.getElementById("btnClearData");
+        const btnPrevDate = document.getElementById("btnPrevDate");
+        const btnNextDate = document.getElementById("btnNextDate");
+        const toggleBtn = document.getElementById("btnToggleTimeline");
+        const wrapper = document.getElementById("timelineWrapper");
+        
+        if (toggleBtn && wrapper) {
+            toggleBtn.addEventListener("click", () => {
+                toggleBtn.classList.toggle("open");
+                if (wrapper.style.maxHeight && wrapper.style.maxHeight !== "0px") {
+                    wrapper.style.maxHeight = "0px";
+                } else {
+                    wrapper.style.maxHeight = wrapper.scrollHeight + "px";
+                }
+            });
+        }
+
+        if (slider && sliderLabel) {
+            slider.value = DANGER_THRESHOLD;
+            sliderLabel.innerText = `위험 감지 기준: ${DANGER_THRESHOLD} dB`;
+
+            slider.addEventListener("input", (e) => {
+                const value = parseInt(e.target.value);
+                DANGER_THRESHOLD = value;
+                sliderLabel.innerText = `위험 감지 기준: ${value} dB`;
+                localStorage.setItem("sound_threshold", value);
+
+                if (value >= 95) {
+                    if (!hasWarnedSensitivity) {
+                        alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!");
+                        hasWarnedSensitivity = true; 
+                    }
+                } else {
+                    hasWarnedSensitivity = false;
+                }
+            });
+        }
+
+        if (btnClearData) {
+            btnClearData.addEventListener("click", () => {
+                if (confirm("정말로 기록 데이터를 모두 삭제하시겠습니까?")) {
+                    localStorage.removeItem("backsound_logs");
+                    alert("데이터가 초기화되었습니다.");
+                    updateRecordScreen();
+                }
+            });
+        }
+
+        if (btnPrevDate) {
+            btnPrevDate.addEventListener("click", () => {
+                if (selectedDateOffset > -6) {
+                    selectedDateOffset--;
+                    updateRecordScreen();
+                }
+            });
+        }
+
+        if (btnNextDate) {
+            btnNextDate.addEventListener("click", () => {
+                if (selectedDateOffset < 0) {
+                    selectedDateOffset++;
+                    updateRecordScreen();
+                }
+            });
+        }
+    });
+
+    // ----------------------------------------------------
+    // [6] 권한 요청 및 로깅
+    // ----------------------------------------------------
+    async function requestAppPermissions() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+        } catch (err) {
+            console.error("마이크 권한 거부됨:", err);
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                () => {},
+                (err) => console.error("위치 권한 거부됨:", err.message),
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+    }
+
+    // ----------------------------------------------------
+    // [7] 데이터 기록 관리
+    // ----------------------------------------------------
+    function getTargetDateString(offset) {
+        const d = new Date();
+        d.setDate(d.getDate() + offset);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function saveDangerLog(type) {
+        const now = new Date();
+        if (now.getTime() - lastSavedTime < 2000) return;
+        lastSavedTime = now.getTime();
+
+        const todayStr = getTargetDateString(0);
+        
+        const logEntry = {
+            date: todayStr, 
+            time: now.toTimeString().split(' ')[0].substring(0, 5), 
+            hour: now.getHours(),
+            type: type
+        };
+
+        let currentLogs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
+        currentLogs.push(logEntry);
+
+        const boundaryDate = getTargetDateString(-7);
+        currentLogs = currentLogs.filter(log => log.date >= boundaryDate);
+
+        localStorage.setItem("backsound_logs", JSON.stringify(currentLogs));
+    }
+
+    function updateRecordScreen() {
+        const targetDateStr = getTargetDateString(selectedDateOffset);
+        const displayTarget = document.getElementById("currentDateDisplay");
+        
+        if (displayTarget) {
+            if (selectedDateOffset === 0) {
+                displayTarget.innerText = `${targetDateStr} (오늘)`;
+                const btnNext = document.getElementById("btnNextDate");
+                if (btnNext) btnNext.disabled = true; 
+            } else {
+                displayTarget.innerText = targetDateStr;
+                const btnNext = document.getElementById("btnNextDate");
+                if (btnNext) btnNext.disabled = false;
+            }
+        }
+        
+        const btnPrev = document.getElementById("btnPrevDate");
+        if (btnPrev) {
+            btnPrev.disabled = (selectedDateOffset <= -6);
+        }
+
+        const logs = JSON.parse(localStorage.getItem("backsound_logs")) || [];
+        const targetLogs = logs.filter(log => log.date === targetDateStr);
+
+        const hornCount = targetLogs.filter(log => log.type === "차량 접근").length;
+        const loudCount = targetLogs.filter(log => log.type === "데시벨 초과 큰 소리").length;
+        const totalCount = targetLogs.length;
+
+        const totalEl = document.getElementById("statTotal");
+        const detailsEl = document.getElementById("statDetails");
+        if (totalEl) totalEl.innerText = `${selectedDateOffset === 0 ? '오늘' : '선택일'} 감지된 위험: 총 ${totalCount}회`;
+        if (detailsEl) detailsEl.innerText = `차량 접근: ${hornCount}회 | 큰소리: ${loudCount}회`;
+
+        const timelineLog = document.getElementById("timelineLog");
+        if (timelineLog) {
+            timelineLog.innerHTML = "";
+            [...targetLogs].reverse().slice(0, 50).forEach(log => {
+                const li = document.createElement("li");
+                li.className = "timeline-item";
+                li.innerHTML = `
+                    <span class="timeline-tag">[${log.type}] 위험 감지!</span>
+                    <span class="timeline-time">${log.time}</span>
+                `;
+                timelineLog.appendChild(li);
+            });
+        }
+
+        const hourlyData = new Array(24).fill(0);
+        targetLogs.forEach(log => {
+            if (log.hour >= 0 && log.hour < 24) {
+                hourlyData[log.hour]++;
+            }
+        });
+
+        const chartEl = document.getElementById('dangerChart');
+        if (chartEl && typeof Chart !== 'undefined') {
+            const ctxChart = chartEl.getContext('2d');
+            if (dangerChartInstance) dangerChartInstance.destroy();
+
+            dangerChartInstance = new Chart(ctxChart, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}시`),
+                    datasets: [{
+                        label: '시간대별 위험 감지 횟수',
+                        data: hourlyData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        pointBackgroundColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { ticks: { maxTicksLimit: 8 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        const ratioChartEl = document.getElementById('ratioChart');
+        if (ratioChartEl && typeof Chart !== 'undefined') {
+            const ctxRatio = ratioChartEl.getContext('2d');
+            if (ratioChartInstance) ratioChartInstance.destroy();
+
+            const hasData = totalCount > 0;
+            const chartData = hasData ? [hornCount, loudCount] : [0, 1];
+            const chartColors = hasData ? ['#ef4444', '#3b82f6'] : ['#e5e7eb'];
+            const chartLabels = hasData ? ['차량 접근', '데시벨 초과 큰 소리'] : ['위험 데이터 없음'];
+
+            ratioChartInstance = new Chart(ctxRatio, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: hasData ? 2 : 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    cutout: '65%' 
+                }
+            });
+        }
+    }
+
+    // ----------------------------------------------------
+    // [8] AI 모델 분석 루프 (오류 없이 예외 처리 완료)
+    // ----------------------------------------------------
+    function aiLoop() {
+        if (!isRunning || aiRunning) {
+            setTimeout(aiLoop, 250);
+            return;
+        }
+
+        const aiResultEl = document.getElementById("aiResult");
+        const warningEl = document.getElementById("warning");
+
+        // AI 분류기가 아직 로드되지 않았을 경우의 안전장치
+        if (!window.classifier) {
+            if (aiResultEl && audioBuffer.length >= SAMPLE_WINDOW) {
+                aiResultEl.innerText = "주변 소리를 탐색 중입니다.";
+            }
+            setTimeout(aiLoop, 500);
+            return;
+        }
+
+        if (audioBuffer.length < SAMPLE_WINDOW) {
+            if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
+                aiResultEl.innerText = "주변 소리 분석 준비 중...";
+            }
+            setTimeout(aiLoop, 250);
+            return;
+        }
+
+        aiRunning = true;
+
+        let currentVolume = 0;
+        if (dataArray) {
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+            currentVolume = sum / dataArray.length;
+        }
+
+        if (currentVolume < 45) { 
+            if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+            if (mainScreen && mainScreen.style.display !== "none") {
+                document.body.style.backgroundColor = "white";
+            }
+            if (warningEl) warningEl.innerText = "";
+            
+            hornCounter = 0;
+            bikeCounter = 0;
+
+            aiRunning = false;
+            setTimeout(aiLoop, 250);
+            return;
+        }
+
+        const inputSlice = audioBuffer.slice(-SAMPLE_WINDOW);
+        const input = new Float32Array(inputSlice);
+
+        try {
+            const result = window.classifier.classify(input);
+
+            if (result && result.results) {
+                let hornScore = 0;
+                let bikeScore = 0;
+
+                result.results.forEach(r => {
+                    const label = r.label.toLowerCase();
+                    if (label === "car horn" || label === "car_horn" || label === "car born") {
+                        hornScore = r.value;
+                    } else if (label === "motorcycle") {
+                        bikeScore = r.value;
+                    }
+                });
+
+                if (hornScore >= 0.8) {
+                    hornCounter++;
+                    bikeCounter = 0;
+                } else if (bikeScore >= 0.8) {
+                    bikeCounter++;
+                    hornCounter = 0;
+                } else {
+                    hornCounter = 0;
+                    bikeCounter = 0;
+                }
+
+                if (hornCounter >= 2 || bikeCounter >= 2) {
+                    if (aiResultEl) aiResultEl.innerText = "주변에 차량이 접근하고 있습니다!";
+                    document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
+                    if (warningEl) warningEl.innerText = "위험";
+
+                    triggerAlert();
+                    saveDangerLog("차량 접근");
+                } else {
+                    if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+                    if (mainScreen && mainScreen.style.display !== "none") {
+                        document.body.style.backgroundColor = "white";
+                    }
+                    if (warningEl) warningEl.innerText = "";
+                }
+            }
+        } catch(err) {
+            console.error("AI classification error:", err);
+        } finally {
+            aiRunning = false;
+            setTimeout(aiLoop, 250);
+        }
+    }
+
+    // ----------------------------------------------------
+    // [9] 알림 및 파형(Visualizer) 그리기
+    // ----------------------------------------------------
+    function triggerAlert() {
+        if (!isBeepCooldown) {
+            playBeep();
+            if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+            isBeepCooldown = true;
+            setTimeout(() => { isBeepCooldown = false; }, 1000); 
+        }
+    }
+
+    function playBeep() {
+        if (!audioContext) return;
+        try {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 1000;
+            oscillator.type = "sine";
+
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function drawVisualizer() {
+    if (!ctx || !canvas || !dataArray) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const barWidth = (canvas.width / dataArray.length);
+    let x = 0;
+
+    for (let i = 0; i < dataArray.length; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height;
+        const y = (canvas.height - barHeight) / 2;
+
+        // 파형 색상: 검은색
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x, y, barWidth - 1, barHeight);
+        x += barWidth;
+    }
+}
+
+    function drawLoop() {
+    requestAnimationFrame(drawLoop);
+
+    if (!isStarted || !isRunning || !analyser || !dataArray) return;
+
+    analyser.getByteFrequencyData(dataArray);
+
+    drawVisualizer();
+
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+    const avg = sum / dataArray.length;
+    const decibel = Math.round(avg * 0.8 + 30); // 데시벨 계산 값
+
+    const levelEl = document.getElementById("level");
+    const warningEl = document.getElementById("warning");
+    const aiResultEl = document.getElementById("aiResult");
+
+    // ★ dB 글자 완전히 삭제하고 숫자만 표기! (예: SOUND: 45)
+    if (levelEl) levelEl.innerText = "SOUND: " + decibel;
+
+    if (decibel > DANGER_THRESHOLD) {
+        document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
+        if (warningEl) warningEl.innerText = "위험";
+        if (aiResultEl) aiResultEl.innerText = "큰 소리 감지!"; 
+        triggerAlert();
+        saveDangerLog("데시벨 초과 큰 소리"); 
+    } else {
+        if (hornCounter < 2 && bikeCounter < 2) {
+            if (mainScreen && mainScreen.style.display !== "none") {
+                document.body.style.backgroundColor = "white";
+            }
+            if (warningEl) warningEl.innerText = "";
+            if (decibel >= 45 && aiResultEl) {
+                aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+            }
+        }
+    }
+}
+
+    // ----------------------------------------------------
+    // [10] 지도 및 위치 추적 로직
+    // ----------------------------------------------------
+    function initMapSystem() {
+        if (!navigator.geolocation) {
+            alert("이 브라우저는 위치 추적을 지원하지 않습니다.");
+            return;
+        }
+
+        if (typeof L !== 'undefined' && !mapInstance) {
+            mapInstance = L.map('map').setView([37.4840, 126.7825], 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(mapInstance);
+        }
+
+        fetch('danger_zones.json')
+            .then(response => response.json())
+            .then(data => {
+                allDangerZones = data;
+                startTracking();
+            })
+            .catch(error => {
+                console.error("danger_zones.json 로드 실패.", error);
+            });
+    }
+
+    function startTracking() {
+        navigator.geolocation.watchPosition(onLocationSuccess, onLocationError, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+        });
+    }
+
+    function onLocationSuccess(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        if (typeof L !== 'undefined' && mapInstance) {
+            if (!userMarker) {
+                userMarker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    color: '#3b82f6', 
+                    fillColor: '#3b82f6',
+                    fillOpacity: 1
+                }).addTo(mapInstance).bindPopup("현재 내 위치");
+                
+                mapInstance.setView([lat, lng], 16);
+                drawNearbyZones(lat, lng);
+            } else {
+                userMarker.setLatLng([lat, lng]);
+            }
+        }
+
+        checkDangerZoneDistance(lat, lng);
+    }
+
+    function onLocationError(error) {
+        console.error("GPS 위치 추적 실패:", error.message);
+    }
+
+    function drawNearbyZones(userLat, userLng) {
+        if (typeof L === 'undefined' || !mapInstance) return;
+
+        allDangerZones.forEach(zone => {
+            const zoneLat = parseFloat(zone["위도"]);
+            const zoneLng = parseFloat(zone["경도"]);
+            const zoneName = zone["대상시설명"] || "어린이 보호구역";
+            const zoneRadius = 50; 
+
+            if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
+                const distance = getDistance(userLat, userLng, zoneLat, zoneLng);
+                if (distance <= 3000) {
+                    L.circle([zoneLat, zoneLng], {
+                        color: '#ef4444',
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.25,
+                        radius: zoneRadius
+                    }).addTo(mapInstance).bindPopup(`<b>${zoneName}</b>`);
+                }
+            }
+        });
+    }
+
+    function checkDangerZoneDistance(userLat, userLng) {
+        let currentActiveZone = null;
+
+        allDangerZones.forEach(zone => {
+            const zoneLat = parseFloat(zone["위도"]);
+            const zoneLng = parseFloat(zone["경도"]);
+            const zoneName = zone["대상시설명"] || "어린이 보호구역";
+            const zoneRadius = 50;
+
+            if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
+                const distance = getDistance(userLat, userLng, zoneLat, zoneLng);
+                if (distance <= zoneRadius) {
+                    currentActiveZone = {
+                        name: zoneName,
+                        msg: `어린이 보호구역[${zoneName}] 진입! 차량 진입에 유의하세요.`
+                    };
+                }
+            }
+        });
+
+        const toast = document.getElementById("zoneToast");
+        if (!toast) return;
+
+        if (currentActiveZone) {
+            if (insideZoneName !== currentActiveZone.name) {
+                insideZoneName = currentActiveZone.name;
+                toast.innerText = currentActiveZone.msg;
+                toast.classList.add("show");
+                if (navigator.vibrate) navigator.vibrate(100);
+            }
+        } else {
+            if (insideZoneName !== null) {
+                insideZoneName = null;
+                toast.classList.remove("show");
+            }
+        }
+    }
+
+    function getDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371000; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; 
+    }
+</script>
