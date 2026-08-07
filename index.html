@@ -276,10 +276,6 @@ img, canvas {
             height: 40px;
         }
 
-        #debug {
-            display: none;
-        }
-
         #mapScreen {
             display: none;
             position: fixed;
@@ -411,7 +407,6 @@ img, canvas {
     </div>
 
     <div id="startGuide" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.45); backdrop-filter: blur(2px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; cursor: pointer; text-align: center; padding: 15px;">
-    <h2 style="font-size: 1.2rem; font-weight: bold; color: #000000; margin-bottom: 6px;">🔊 BackSound</h2>
     <p style="font-size: 0.95rem; font-weight: 600; color: #000000; margin: 0;">화면을 터치하면 소리 감지가 시작됩니다</p>
 </div>
 
@@ -527,8 +522,11 @@ img, canvas {
         </div>
     </div>
 
-    <div id="debug" style="position:absolute; top:10px; left:10px; color:white; font-size:14px;"></div>
 </body>
+
+<div id="aiResult" style="font-size:1rem; color:#555;">
+주변 소리를 탐색 중입니다.
+</div>
     
     <script>
     // ----------------------------------------------------
@@ -585,6 +583,8 @@ img, canvas {
         btnMap = document.getElementById("btnMap");
         btnInfo = document.getElementById("btnInfo");
 
+        initAI();
+
         hideAllScreens();
         if (startGuide) startGuide.style.display = "flex";
 
@@ -602,6 +602,18 @@ img, canvas {
         window.addEventListener("touchstart", handleStart);
     };
 
+    async function initAI() {
+    try {
+        window.classifier = new EdgeImpulseClassifier();
+        await window.classifier.init();
+
+        console.log("Edge Impulse AI 로딩 완료");
+        console.log(window.classifier.getProjectInfo());
+
+    } catch (error) {
+        console.error("AI 초기화 실패:", error);
+    }
+}
     // ----------------------------------------------------
     // [3] 메인 화면 진입 및 마이크 설정
     // ----------------------------------------------------
@@ -613,7 +625,37 @@ img, canvas {
             if (mainScreen) mainScreen.style.display = "flex";
             if (btnHome) btnHome.classList.add("active");
 
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // ----------------------------------------------------
+            // [수정된 마이크 연결 로직]
+            // ----------------------------------------------------
+            
+            // 1. 기존에 열려있던 마이크 트랙 정리 (NotReadableError 방지)
+            if (window.micStream) {
+                window.micStream.getTracks().forEach(track => track.stop());
+            }
+
+            try {
+                // 2. 안드로이드 웹뷰 충돌 방지 옵션을 적용하여 마이크 시작
+                micStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: false, // 하드웨어 에코 취소 끄기
+                        noiseSuppression: false  // 노이즈 제거 끄기
+                    },
+                    video: false
+                });
+                
+                console.log(micStream.getTracks()); 
+                window.micStream = micStream; // 글로벌 변수 백업
+                
+            } catch (e) {
+                alert(
+                    "마이크 연결 실패!\n" +
+                    "이름: " + e.name + "\n" +
+                    "메시지: " + e.message
+                );
+                console.error(e);
+                return;
+            }
             
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             audioContext = new AudioContextClass();
@@ -632,15 +674,14 @@ img, canvas {
             processor.connect(audioContext.destination);
 
             processor.onaudioprocess = function(e) {
-                const input = e.inputBuffer.getChannelData(0);
-                for (let i = 0; i < input.length; i++) {
-                    let s = Math.max(-1, Math.min(1, input[i]));
-                    audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
-                }
-                if (audioBuffer.length > SAMPLE_WINDOW * 2) {
-                    audioBuffer = audioBuffer.slice(-SAMPLE_WINDOW * 2);
-                }
-            };
+
+    const input = e.inputBuffer.getChannelData(0);
+
+    for (let i = 0; i < input.length; i++) {
+        let s = Math.max(-1, Math.min(1, input[i]));
+        audioBuffer.push(s < 0 ? s * 0x8000 : s * 0x7FFF);
+    }
+};
 
             dataArray = new Uint8Array(analyser.frequencyBinCount);
             canvas = document.getElementById("wave");
@@ -653,9 +694,14 @@ img, canvas {
             aiLoop();
 
         } catch (e) {
-            console.error(e);
-            alert("마이크 연결 오류: " + e.message);
-        }
+    console.error(e);
+
+    alert(
+        "name : " + e.name +
+        "\nmessage : " + e.message +
+        "\nconstraint : " + (e.constraint || "없음")
+    );
+}
     }
 
     // ----------------------------------------------------
@@ -690,7 +736,6 @@ img, canvas {
     // [5] DOM 이벤트 연결
     // ----------------------------------------------------
     document.addEventListener("DOMContentLoaded", () => {
-        requestAppPermissions();
 
         const btnHomeEl = document.getElementById("btnHome");
         const btnGuideEl = document.getElementById("btnGuide");
@@ -792,7 +837,7 @@ img, canvas {
 
                 if (value >= 95) {
                     if (!hasWarnedSensitivity) {
-                        alert("⚠️ 주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!");
+                        alert("주의: 위험 감지 기준 데시벨이 너무 높게 설정되었습니다!");
                         hasWarnedSensitivity = true; 
                     }
                 } else {
@@ -1003,6 +1048,7 @@ img, canvas {
     // [8] AI 모델 분석 루프 (오류 없이 예외 처리 완료)
     // ----------------------------------------------------
     function aiLoop() {
+        
         if (!isRunning || aiRunning) {
             setTimeout(aiLoop, 250);
             return;
@@ -1021,6 +1067,7 @@ img, canvas {
         }
 
         if (audioBuffer.length < SAMPLE_WINDOW) {
+
             if (mainScreen && mainScreen.style.display !== "none" && aiResultEl) {
                 aiResultEl.innerText = "주변 소리 분석 준비 중...";
             }
@@ -1038,7 +1085,7 @@ img, canvas {
         }
 
         if (currentVolume < 45) { 
-            if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+            if (aiResultEl) aiResultEl.innerText = " 주변 소리를 탐색 중입니다.";
             if (mainScreen && mainScreen.style.display !== "none") {
                 document.body.style.backgroundColor = "white";
             }
@@ -1055,8 +1102,9 @@ img, canvas {
         const inputSlice = audioBuffer.slice(-SAMPLE_WINDOW);
         const input = new Float32Array(inputSlice);
 
-        try {
-            const result = window.classifier.classify(input);
+try {
+
+const result = window.classifier.classify(input);
 
             if (result && result.results) {
                 let hornScore = 0;
@@ -1071,10 +1119,10 @@ img, canvas {
                     }
                 });
 
-                if (hornScore >= 0.8) {
+                if (hornScore >= 0.7) {
                     hornCounter++;
                     bikeCounter = 0;
-                } else if (bikeScore >= 0.8) {
+                } else if (bikeScore >= 0.7) {
                     bikeCounter++;
                     hornCounter = 0;
                 } else {
@@ -1083,14 +1131,17 @@ img, canvas {
                 }
 
                 if (hornCounter >= 2 || bikeCounter >= 2) {
-                    if (aiResultEl) aiResultEl.innerText = "주변에 차량이 접근하고 있습니다!";
-                    document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
-                    if (warningEl) warningEl.innerText = "위험";
+                    if (aiResultEl) {
+    aiResultEl.innerText = "주변에 차량이 접근하고 있습니다";
+    aiResultEl.style.color = "red";
+}
+
+if (warningEl) warningEl.innerText = "";
 
                     triggerAlert();
                     saveDangerLog("차량 접근");
                 } else {
-                    if (aiResultEl) aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+                    if (aiResultEl) aiResultEl.innerText = " 주변 소리를 탐색 중입니다.";
                     if (mainScreen && mainScreen.style.display !== "none") {
                         document.body.style.backgroundColor = "white";
                     }
@@ -1098,8 +1149,14 @@ img, canvas {
                 }
             }
         } catch(err) {
-            console.error("AI classification error:", err);
-        } finally {
+    alert(
+        "AI 오류\n\n" +
+        err.name + "\n\n" +
+        err.message
+    );
+
+    console.error(err);
+} finally {
             aiRunning = false;
             setTimeout(aiLoop, 250);
         }
@@ -1178,8 +1235,12 @@ img, canvas {
 
     if (decibel > DANGER_THRESHOLD) {
         document.body.style.backgroundColor = "rgba(239, 68, 68, 0.3)";
-        if (warningEl) warningEl.innerText = "위험";
-        if (aiResultEl) aiResultEl.innerText = "큰 소리 감지!"; 
+        if (warningEl) warningEl.innerText = "";
+
+if (aiResultEl) {
+    aiResultEl.innerText = "큰 소리 감지";
+    aiResultEl.style.color = "red";
+}
         triggerAlert();
         saveDangerLog("데시벨 초과 큰 소리"); 
     } else {
@@ -1188,8 +1249,11 @@ img, canvas {
                 document.body.style.backgroundColor = "white";
             }
             if (warningEl) warningEl.innerText = "";
+            if (aiResultEl) {
+            aiResultEl.style.color = "#555";
+        }
             if (decibel >= 45 && aiResultEl) {
-                aiResultEl.innerText = "🔍 주변 소리를 탐색 중입니다.";
+                aiResultEl.innerText = " 주변 소리를 탐색 중입니다.";
             }
         }
     }
@@ -1330,3 +1394,9 @@ img, canvas {
         return R * c; 
     }
 </script>
+
+<script src="edge-impulse-standalone.js"></script>
+<script src="run-impulse.js"></script>
+
+</body>
+</html>
